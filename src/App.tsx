@@ -1,363 +1,169 @@
 import { FormEvent, useMemo, useState } from 'react';
-import {
-  Activity,
-  AlertTriangle,
-  ArrowUpRight,
-  BatteryCharging,
-  Bolt,
-  Building2,
-  CalendarClock,
-  CheckCircle2,
-  ClipboardList,
-  Gauge,
-  MapPin,
-  Search,
-  ShieldCheck,
-  UsersRound,
-  Zap,
-} from 'lucide-react';
+import { Activity, BanknoteArrowUp, FileText, HardDrive, LogOut, Search, ShieldCheck, UserRoundPlus, UsersRound, Wrench, Zap } from 'lucide-react';
+import { Section } from './components/Section';
+import { loginWithEmail, logout, registerWithEmail, saveRecord } from './services/firebase';
+import { clientsSeed, equipmentSeed, financeSeed, orderSeed, quoteSeed } from './services/seedData';
+import { Client, Equipment, FinanceEntry, Quote, ServiceOrder, ServiceStatus } from './types';
+import './styles.css';
 
-type Priority = 'Alta' | 'Média' | 'Baixa';
-type TeamStatus = 'Em atendimento' | 'Inspeção preventiva' | 'Disponível';
+const serviceStatuses: ServiceStatus[] = ['Recebido', 'Em análise', 'Aguardando peça', 'Em reparo', 'Finalizado', 'Entregue'];
+const modules = ['Dashboard', 'Clientes', 'Equipamentos', 'Ordens de serviço', 'Orçamentos', 'Financeiro'] as const;
+type Module = typeof modules[number];
 
-type ServiceOrder = {
-  id: string;
-  priority: Priority;
-  customer: string;
-  issue: string;
-  time: string;
-};
-
-type Team = {
-  name: string;
-  area: string;
-  status: TeamStatus;
-  eta: string;
-};
-
-type Customer = {
-  name: string;
-  segment: string;
-  demand: string;
-  status: 'Normal' | 'Atenção' | 'Crítico';
-  region: string;
-};
-
-type Asset = {
-  name: string;
-  region: string;
-  load: number;
-  health: number;
-};
-
-const teams: Team[] = [
-  { name: 'Equipe Alfa', area: 'Subestação Norte', status: 'Em atendimento', eta: '14 min' },
-  { name: 'Equipe Delta', area: 'Alimentador C-17', status: 'Inspeção preventiva', eta: '38 min' },
-  { name: 'Equipe Solar', area: 'Parque Fotovoltaico 02', status: 'Disponível', eta: 'Pronta' },
-];
-
-const initialTickets: ServiceOrder[] = [
-  { id: 'OS-2048', priority: 'Alta', customer: 'Hospital São Lucas', issue: 'Oscilação de tensão', time: '09:42' },
-  { id: 'OS-2049', priority: 'Média', customer: 'Condomínio Ipê', issue: 'Vistoria de medição', time: '10:15' },
-  { id: 'OS-2050', priority: 'Baixa', customer: 'Mercado Central', issue: 'Ligação nova', time: '11:05' },
-];
-
-const priorityOptions: Priority[] = ['Alta', 'Média', 'Baixa'];
-
-const customers: Customer[] = [
-  { name: 'Hospital São Lucas', segment: 'Saúde', demand: '1,8 MW', status: 'Crítico', region: 'Norte' },
-  { name: 'Condomínio Ipê', segment: 'Residencial', demand: '820 kW', status: 'Atenção', region: 'Centro' },
-  { name: 'Mercado Central', segment: 'Comercial', demand: '460 kW', status: 'Normal', region: 'Sul' },
-  { name: 'Indústria Aurora', segment: 'Industrial', demand: '3,2 MW', status: 'Normal', region: 'Leste' },
-];
-
-const assets: Asset[] = [
-  { name: 'Subestação Norte', region: 'Norte', load: 78, health: 92 },
-  { name: 'Alimentador C-17', region: 'Centro', load: 86, health: 81 },
-  { name: 'Transformador TR-04', region: 'Sul', load: 64, health: 96 },
-];
+const makeId = (prefix: string) => `tmp-${prefix}-${Date.now()}`;
+const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 function App() {
-  const [tickets, setTickets] = useState<ServiceOrder[]>(initialTickets);
-  const [query, setQuery] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState<'Todas' | Priority>('Todas');
-  const [newTicket, setNewTicket] = useState({ customer: '', issue: '', priority: 'Média' as Priority });
-  const [activeRegion, setActiveRegion] = useState<'Todas' | Customer['region']>('Todas');
+  const [userEmail, setUserEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isAuthenticated, setAuthenticated] = useState(false);
+  const [activeModule, setActiveModule] = useState<Module>('Dashboard');
+  const [search, setSearch] = useState('');
+  const [clients, setClients] = useState<Client[]>(clientsSeed);
+  const [equipment, setEquipment] = useState<Equipment[]>(equipmentSeed);
+  const [orders, setOrders] = useState<ServiceOrder[]>(orderSeed);
+  const [quotes, setQuotes] = useState<Quote[]>(quoteSeed);
+  const [finance, setFinance] = useState<FinanceEntry[]>(financeSeed);
+  const [clientForm, setClientForm] = useState({ name: '', document: '', phone: '', email: '', city: '' });
+  const [equipmentForm, setEquipmentForm] = useState({ clientId: 'cli-1', category: 'Eletrônico' as Equipment['category'], brand: '', model: '', serial: '', notes: '' });
+  const [orderForm, setOrderForm] = useState({ clientId: 'cli-1', equipmentId: 'eq-1', problem: '', diagnosis: '' });
 
-  const filteredTickets = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+  const filteredClients = useMemo(() => clients.filter((client) => `${client.name} ${client.document} ${client.city}`.toLowerCase().includes(search.toLowerCase())), [clients, search]);
+  const filteredEquipment = useMemo(() => equipment.filter((item) => `${item.brand} ${item.model} ${item.serial}`.toLowerCase().includes(search.toLowerCase())), [equipment, search]);
+  const cashFlow = finance.reduce((total, entry) => total + (entry.type === 'Receber' ? entry.amount : -entry.amount), 0);
+  const openOrders = orders.filter((order) => !['Finalizado', 'Entregue'].includes(order.status)).length;
 
-    return tickets.filter((ticket) => {
-      const matchesPriority = priorityFilter === 'Todas' || ticket.priority === priorityFilter;
-      const searchable = `${ticket.id} ${ticket.customer} ${ticket.issue}`.toLowerCase();
-      return matchesPriority && (!normalizedQuery || searchable.includes(normalizedQuery));
-    });
-  }, [priorityFilter, query, tickets]);
-
-  const visibleCustomers = useMemo(() => (
-    activeRegion === 'Todas' ? customers : customers.filter((customer) => customer.region === activeRegion)
-  ), [activeRegion]);
-
-  const criticalTickets = tickets.filter((ticket) => ticket.priority === 'Alta').length;
-  const availableTeams = teams.filter((team) => team.status === 'Disponível').length;
-  const monitoredNetwork = criticalTickets > 2 ? '96,9%' : '98,7%';
-  const nextTicketId = `OS-${2048 + tickets.length}`;
-  const regions = ['Todas', ...Array.from(new Set(customers.map((customer) => customer.region)))] as const;
-
-  const metrics = [
-    { label: 'Unidades consumidoras', value: '3.248', trend: '+12%', icon: Building2 },
-    { label: 'Ordens em campo', value: String(tickets.length), trend: `${criticalTickets} críticas`, icon: ClipboardList },
-    { label: 'Rede monitorada', value: monitoredNetwork, trend: 'tempo real', icon: Activity },
-    { label: 'Equipes disponíveis', value: String(availableTeams), trend: `${teams.length} cadastradas`, icon: AlertTriangle },
-  ];
-
-  function handleCreateTicket(event: FormEvent<HTMLFormElement>) {
+  async function handleAuth(event: FormEvent<HTMLFormElement>, mode: 'login' | 'register') {
     event.preventDefault();
-
-    if (!newTicket.customer.trim() || !newTicket.issue.trim()) {
-      return;
+    setAuthError('');
+    try {
+      if (mode === 'login') await loginWithEmail(userEmail, password);
+      if (mode === 'register') await registerWithEmail(userEmail, password);
+      setAuthenticated(true);
+    } catch (error) {
+      setAuthError('Não foi possível autenticar no Firebase. Verifique credenciais e variáveis VITE_FIREBASE_*.' );
     }
+  }
 
-    const createdAt = new Intl.DateTimeFormat('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date());
+  function addClient(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!clientForm.name || !clientForm.phone) return;
+    const client = { id: makeId('client'), ...clientForm };
+    setClients((current) => [client, ...current]);
+    void saveRecord('clients', client).catch(console.error);
+    setClientForm({ name: '', document: '', phone: '', email: '', city: '' });
+  }
 
-    setTickets((currentTickets) => [
-      {
-        id: nextTicketId,
-        priority: newTicket.priority,
-        customer: newTicket.customer.trim(),
-        issue: newTicket.issue.trim(),
-        time: createdAt,
-      },
-      ...currentTickets,
-    ]);
-    setNewTicket({ customer: '', issue: '', priority: 'Média' });
+  function addEquipment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!equipmentForm.brand || !equipmentForm.model) return;
+    const item = { id: makeId('equipment'), ...equipmentForm };
+    setEquipment((current) => [item, ...current]);
+    void saveRecord('equipment', item).catch(console.error);
+    setEquipmentForm({ clientId: clients[0]?.id ?? '', category: 'Eletrônico', brand: '', model: '', serial: '', notes: '' });
+  }
+
+  function addOrder(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!orderForm.problem) return;
+    const order: ServiceOrder = {
+      id: makeId('order'),
+      ...orderForm,
+      status: 'Recebido',
+      intakeDate: new Date().toISOString().slice(0, 10),
+      history: [{ at: new Date().toLocaleString('pt-BR'), status: 'Recebido', note: 'Entrada registrada no sistema.' }],
+    };
+    setOrders((current) => [order, ...current]);
+    void saveRecord('serviceOrders', order).catch(console.error);
+    setOrderForm({ clientId: clients[0]?.id ?? '', equipmentId: equipment[0]?.id ?? '', problem: '', diagnosis: '' });
+  }
+
+  function updateOrderStatus(orderId: string, status: ServiceStatus) {
+    setOrders((current) => current.map((order) => order.id === orderId ? {
+      ...order,
+      status,
+      exitDate: status === 'Entregue' ? new Date().toISOString().slice(0, 10) : order.exitDate,
+      history: [...order.history, { at: new Date().toLocaleString('pt-BR'), status, note: `Status alterado para ${status}.` }],
+    } : order));
+  }
+
+  function createQuote(orderId: string) {
+    const quote: Quote = { id: makeId('quote'), serviceOrderId: orderId, parts: 350, labor: 250, discount: 0, approved: false };
+    setQuotes((current) => [quote, ...current]);
+    setActiveModule('Orçamentos');
+  }
+
+  function approveQuote(quoteId: string) {
+    setQuotes((current) => current.map((quote) => quote.id === quoteId ? { ...quote, approved: true } : quote));
+    const quote = quotes.find((item) => item.id === quoteId);
+    if (!quote) return;
+    setFinance((current) => [{ id: makeId('finance'), type: 'Receber', description: `Orçamento ${quote.id}`, amount: quote.parts + quote.labor - quote.discount, dueDate: new Date().toISOString().slice(0, 10), paid: false }, ...current]);
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <main className="login-screen">
+        <form className="login-card" onSubmit={(event) => handleAuth(event, 'login')}>
+          <span className="brand-mark"><Zap size={28} /></span>
+          <h1>EletroGrid Manager</h1>
+          <p>Assistência técnica para eletrônicos, energia solar e serviços elétricos.</p>
+          <input aria-label="E-mail" onChange={(event) => setUserEmail(event.target.value)} placeholder="E-mail" type="email" value={userEmail} required />
+          <input aria-label="Senha" minLength={6} onChange={(event) => setPassword(event.target.value)} placeholder="Senha" type="password" value={password} required />
+          {authError && <strong className="form-error">{authError}</strong>}
+          <button type="submit">Entrar com Firebase</button>
+          <button className="ghost-button" onClick={(event) => handleAuth(event as unknown as FormEvent<HTMLFormElement>, 'register')} type="button">Criar acesso</button>
+          <button className="link-button" onClick={() => setAuthenticated(true)} type="button">Acessar modo demonstração</button>
+        </form>
+      </main>
+    );
   }
 
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <div className="brand">
-          <span className="brand-mark"><Zap size={24} /></span>
-          <div>
-            <strong>Eletrogrid</strong>
-            <small>Manager</small>
-          </div>
-        </div>
-        <nav>
-          <a className="active" href="#dashboard"><Gauge size={18} /> Dashboard</a>
-          <a href="#clientes"><UsersRound size={18} /> Clientes</a>
-          <a href="#operacoes"><Bolt size={18} /> Operações</a>
-          <a href="#agenda"><CalendarClock size={18} /> Agenda</a>
-        </nav>
-        <section className="sidebar-card">
-          <BatteryCharging size={28} />
-          <strong>Carga do sistema</strong>
-          <p>Pico previsto às 18h30 com reserva operacional segura.</p>
-        </section>
+        <div className="brand"><span className="brand-mark"><Zap size={24} /></span><div><strong>EletroGrid</strong><small>Manager</small></div></div>
+        <nav>{modules.map((module) => <button className={activeModule === module ? 'nav-button active' : 'nav-button'} key={module} onClick={() => setActiveModule(module)} type="button">{module}</button>)}</nav>
+        <button className="logout-button" onClick={() => { void logout(); setAuthenticated(false); }} type="button"><LogOut size={18} /> Sair</button>
       </aside>
-
       <section className="content">
-        <header className="hero" id="dashboard">
-          <div>
-            <span className="eyebrow"><CheckCircle2 size={16} /> Centro de controle online</span>
-            <h1>Gestão inteligente para redes elétricas, equipes e clientes.</h1>
-            <p>Monitore indicadores, priorize ordens de serviço e acompanhe equipes em campo em uma única visão operacional.</p>
-          </div>
-          <label className="search-box">
-            <Search size={18} />
-            <input
-              aria-label="Buscar"
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar cliente, OS ou subestação"
-              value={query}
-            />
-          </label>
-        </header>
-
-        <section className="metrics-grid" aria-label="Indicadores principais">
-          {metrics.map((metric) => {
-            const Icon = metric.icon;
-            return (
-              <article className="metric-card" key={metric.label}>
-                <span><Icon size={22} /></span>
-                <small>{metric.label}</small>
-                <strong>{metric.value}</strong>
-                <em>{metric.trend}</em>
-              </article>
-            );
-          })}
-        </section>
-
-        <section className="panel-grid" id="operacoes">
-          <article className="panel large-panel">
-            <div className="panel-heading">
-              <div>
-                <span className="eyebrow">Operação em tempo real</span>
-                <h2>Mapa de disponibilidade</h2>
-              </div>
-              <button>Ver rede <ArrowUpRight size={16} /></button>
-            </div>
-            <div className="network-map" role="img" aria-label="Mapa abstrato da rede elétrica">
-              <span className="node node-a" />
-              <span className="node node-b" />
-              <span className="node node-c warning" />
-              <span className="node node-d" />
-              <span className="line line-1" />
-              <span className="line line-2" />
-              <span className="line line-3" />
-            </div>
-          </article>
-
-          <article className="panel">
-            <div className="panel-heading compact">
-              <h2>Equipes em campo</h2>
-              <MapPin size={18} />
-            </div>
-            <div className="team-list">
-              {teams.map((team) => (
-                <div className="team-row" key={team.name}>
-                  <div>
-                    <strong>{team.name}</strong>
-                    <span>{team.area}</span>
-                  </div>
-                  <small>{team.status} · {team.eta}</small>
-                </div>
-              ))}
-            </div>
-          </article>
-        </section>
-
-        <section className="panel-grid business-grid" id="clientes">
-          <article className="panel">
-            <div className="panel-heading compact">
-              <div>
-                <span className="eyebrow">Clientes</span>
-                <h2>Carteira monitorada</h2>
-              </div>
-              <UsersRound size={18} />
-            </div>
-            <div className="filter-group customer-filter" aria-label="Filtro por região">
-              {regions.map((region) => (
-                <button
-                  className={activeRegion === region ? 'ghost-button active' : 'ghost-button'}
-                  key={region}
-                  onClick={() => setActiveRegion(region)}
-                  type="button"
-                >
-                  {region}
-                </button>
-              ))}
-            </div>
-            <div className="customer-list">
-              {visibleCustomers.map((customer) => (
-                <div className="customer-card" key={customer.name}>
-                  <div>
-                    <strong>{customer.name}</strong>
-                    <span>{customer.segment} · {customer.region}</span>
-                  </div>
-                  <div>
-                    <small>Demanda</small>
-                    <strong>{customer.demand}</strong>
-                  </div>
-                  <span className={`status ${customer.status.toLowerCase()}`}>{customer.status}</span>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <article className="panel">
-            <div className="panel-heading compact">
-              <div>
-                <span className="eyebrow">Ativos</span>
-                <h2>Saúde da infraestrutura</h2>
-              </div>
-              <ShieldCheck size={18} />
-            </div>
-            <div className="asset-list">
-              {assets.map((asset) => (
-                <div className="asset-row" key={asset.name}>
-                  <div className="asset-title">
-                    <strong>{asset.name}</strong>
-                    <span>{asset.region}</span>
-                  </div>
-                  <label>
-                    Carga {asset.load}%
-                    <progress max="100" value={asset.load}>{asset.load}%</progress>
-                  </label>
-                  <label>
-                    Saúde {asset.health}%
-                    <progress max="100" value={asset.health}>{asset.health}%</progress>
-                  </label>
-                </div>
-              ))}
-            </div>
-          </article>
-        </section>
-
-        <section className="panel tickets-panel">
-          <div className="panel-heading compact">
-            <div>
-              <span className="eyebrow">Triagem</span>
-              <h2>Ordens de serviço recentes</h2>
-            </div>
-            <div className="filter-group" aria-label="Filtro por prioridade">
-              {(['Todas', ...priorityOptions] as const).map((priority) => (
-                <button
-                  className={priorityFilter === priority ? 'ghost-button active' : 'ghost-button'}
-                  key={priority}
-                  onClick={() => setPriorityFilter(priority)}
-                  type="button"
-                >
-                  {priority}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <form className="ticket-form" onSubmit={handleCreateTicket}>
-            <input
-              aria-label="Cliente"
-              onChange={(event) => setNewTicket((ticket) => ({ ...ticket, customer: event.target.value }))}
-              placeholder="Cliente"
-              value={newTicket.customer}
-            />
-            <input
-              aria-label="Ocorrência"
-              onChange={(event) => setNewTicket((ticket) => ({ ...ticket, issue: event.target.value }))}
-              placeholder="Ocorrência"
-              value={newTicket.issue}
-            />
-            <select
-              aria-label="Prioridade"
-              onChange={(event) => setNewTicket((ticket) => ({ ...ticket, priority: event.target.value as Priority }))}
-              value={newTicket.priority}
-            >
-              {priorityOptions.map((priority) => <option key={priority}>{priority}</option>)}
-            </select>
-            <button type="submit">Abrir {nextTicketId}</button>
-          </form>
-
-          <div className="ticket-table">
-            {filteredTickets.map((ticket) => (
-              <div className="ticket-row" key={ticket.id}>
-                <strong>{ticket.id}</strong>
-                <span className={`priority ${ticket.priority.toLowerCase()}`}>{ticket.priority}</span>
-                <span>{ticket.customer}</span>
-                <span>{ticket.issue}</span>
-                <small>{ticket.time}</small>
-              </div>
-            ))}
-            {filteredTickets.length === 0 && (
-              <p className="empty-state">Nenhuma ordem encontrada para a busca ou prioridade selecionada.</p>
-            )}
-          </div>
-        </section>
+        <header className="hero"><div><span className="eyebrow"><ShieldCheck size={16} /> Operação integrada</span><h1>Sistema completo para assistência técnica ELETROGRID.</h1><p>Clientes, equipamentos, ordens de serviço, orçamentos, financeiro e Firebase em uma base organizada.</p></div><label className="search-box"><Search size={18}/><input aria-label="Pesquisar" onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar registros" value={search}/></label></header>
+        {activeModule === 'Dashboard' && <Dashboard clients={clients.length} equipment={equipment.length} openOrders={openOrders} cashFlow={cashFlow} />}
+        {activeModule === 'Clientes' && <ClientsModule addClient={addClient} clients={filteredClients} form={clientForm} remove={(id) => setClients((current) => current.filter((client) => client.id !== id))} setForm={setClientForm} />}
+        {activeModule === 'Equipamentos' && <EquipmentModule addEquipment={addEquipment} clients={clients} equipment={filteredEquipment} form={equipmentForm} remove={(id) => setEquipment((current) => current.filter((item) => item.id !== id))} setForm={setEquipmentForm} />}
+        {activeModule === 'Ordens de serviço' && <OrdersModule addOrder={addOrder} clients={clients} createQuote={createQuote} equipment={equipment} form={orderForm} orders={orders} setForm={setOrderForm} updateStatus={updateOrderStatus} />}
+        {activeModule === 'Orçamentos' && <QuotesModule approveQuote={approveQuote} quotes={quotes} />}
+        {activeModule === 'Financeiro' && <FinanceModule cashFlow={cashFlow} finance={finance} />}
       </section>
     </main>
   );
+}
+
+function Dashboard({ clients, equipment, openOrders, cashFlow }: { clients: number; equipment: number; openOrders: number; cashFlow: number }) {
+  const cards = [{ label: 'Clientes ativos', value: clients, icon: UsersRound }, { label: 'Equipamentos', value: equipment, icon: HardDrive }, { label: 'OS abertas', value: openOrders, icon: Wrench }, { label: 'Fluxo previsto', value: currency.format(cashFlow), icon: BanknoteArrowUp }];
+  return <section className="metrics-grid">{cards.map(({ label, value, icon: Icon }) => <article className="metric-card" key={label}><span><Icon size={22}/></span><small>{label}</small><strong>{value}</strong><em>Atualizado</em></article>)}</section>;
+}
+
+function ClientsModule(props: { clients: Client[]; form: Omit<Client, 'id'>; setForm: (form: Omit<Client, 'id'>) => void; addClient: (event: FormEvent<HTMLFormElement>) => void; remove: (id: string) => void }) {
+  return <Section eyebrow="Etapa 2" title="Cadastro de clientes" actions={<UserRoundPlus/>}><form className="crud-form" onSubmit={props.addClient}>{(['name','document','phone','email','city'] as const).map((field) => <input key={field} placeholder={{name:'Nome',document:'CPF/CNPJ',phone:'Telefone',email:'E-mail',city:'Cidade'}[field]} value={props.form[field]} onChange={(event)=>props.setForm({...props.form,[field]:event.target.value})} required={field==='name'||field==='phone'}/>) }<button type="submit">Salvar cliente</button></form><div className="records-grid">{props.clients.map((client)=><article className="record-card" key={client.id}><strong>{client.name}</strong><span>{client.document}</span><span>{client.phone} · {client.city}</span><button className="danger-button" onClick={()=>props.remove(client.id)} type="button">Excluir</button></article>)}</div></Section>;
+}
+
+function EquipmentModule(props: { clients: Client[]; equipment: Equipment[]; form: Omit<Equipment, 'id'>; setForm: (form: Omit<Equipment, 'id'>) => void; addEquipment: (event: FormEvent<HTMLFormElement>) => void; remove: (id: string) => void }) {
+  return <Section eyebrow="Etapa 2" title="Cadastro de equipamentos" actions={<HardDrive/>}><form className="crud-form" onSubmit={props.addEquipment}><select value={props.form.clientId} onChange={(event)=>props.setForm({...props.form,clientId:event.target.value})}>{props.clients.map((client)=><option key={client.id} value={client.id}>{client.name}</option>)}</select><select value={props.form.category} onChange={(event)=>props.setForm({...props.form,category:event.target.value as Equipment['category']})}><option>Eletrônico</option><option>Energia solar</option><option>Elétrico</option></select><input placeholder="Marca" value={props.form.brand} onChange={(event)=>props.setForm({...props.form,brand:event.target.value})} required/><input placeholder="Modelo" value={props.form.model} onChange={(event)=>props.setForm({...props.form,model:event.target.value})} required/><input placeholder="Série" value={props.form.serial} onChange={(event)=>props.setForm({...props.form,serial:event.target.value})}/><input placeholder="Observações" value={props.form.notes} onChange={(event)=>props.setForm({...props.form,notes:event.target.value})}/><button type="submit">Salvar equipamento</button></form><div className="records-grid">{props.equipment.map((item)=><article className="record-card" key={item.id}><strong>{item.brand} {item.model}</strong><span>{item.category} · {item.serial}</span><span>{item.notes}</span><button className="danger-button" onClick={()=>props.remove(item.id)} type="button">Excluir</button></article>)}</div></Section>;
+}
+
+function OrdersModule(props: { clients: Client[]; equipment: Equipment[]; orders: ServiceOrder[]; form: { clientId: string; equipmentId: string; problem: string; diagnosis: string }; setForm: (form: { clientId: string; equipmentId: string; problem: string; diagnosis: string }) => void; addOrder: (event: FormEvent<HTMLFormElement>) => void; updateStatus: (id: string, status: ServiceStatus) => void; createQuote: (id: string) => void }) {
+  return <Section eyebrow="Etapa 3" title="Ordens de serviço"><form className="crud-form" onSubmit={props.addOrder}><select value={props.form.clientId} onChange={(event)=>props.setForm({...props.form,clientId:event.target.value})}>{props.clients.map((client)=><option key={client.id} value={client.id}>{client.name}</option>)}</select><select value={props.form.equipmentId} onChange={(event)=>props.setForm({...props.form,equipmentId:event.target.value})}>{props.equipment.map((item)=><option key={item.id} value={item.id}>{item.brand} {item.model}</option>)}</select><input placeholder="Problema relatado" value={props.form.problem} onChange={(event)=>props.setForm({...props.form,problem:event.target.value})} required/><input placeholder="Diagnóstico inicial" value={props.form.diagnosis} onChange={(event)=>props.setForm({...props.form,diagnosis:event.target.value})}/><button type="submit">Registrar entrada</button></form><div className="order-list">{props.orders.map((order)=><article className="record-card wide" key={order.id}><div><strong>{order.id.toUpperCase()} · {order.status}</strong><span>Entrada: {order.intakeDate} {order.exitDate ? `· Saída: ${order.exitDate}` : ''}</span><p>{order.problem}</p></div><select value={order.status} onChange={(event)=>props.updateStatus(order.id,event.target.value as ServiceStatus)}>{serviceStatuses.map((status)=><option key={status}>{status}</option>)}</select><button onClick={()=>props.createQuote(order.id)} type="button">Gerar orçamento</button><details><summary>Histórico completo</summary>{order.history.map((item)=><p key={`${item.at}-${item.status}`}>{item.at} · {item.status} · {item.note}</p>)}</details></article>)}</div></Section>;
+}
+
+function QuotesModule({ quotes, approveQuote }: { quotes: Quote[]; approveQuote: (id: string) => void }) {
+  return <Section eyebrow="Etapa 4" title="Orçamentos automáticos" actions={<FileText/>}><div className="records-grid">{quotes.map((quote)=>{ const total = quote.parts + quote.labor - quote.discount; return <article className="record-card" key={quote.id}><strong>{quote.id.toUpperCase()}</strong><span>OS: {quote.serviceOrderId.toUpperCase()}</span><span>Peças {currency.format(quote.parts)} · Mão de obra {currency.format(quote.labor)}</span><strong>Total: {currency.format(total)}</strong><button disabled={quote.approved} onClick={()=>approveQuote(quote.id)} type="button">{quote.approved ? 'Convertido em financeiro' : 'Aprovar e converter'}</button></article>; })}</div></Section>;
+}
+
+function FinanceModule({ finance, cashFlow }: { finance: FinanceEntry[]; cashFlow: number }) {
+  const receivable = finance.filter((entry)=>entry.type==='Receber').reduce((total, entry)=>total+entry.amount,0);
+  const payable = finance.filter((entry)=>entry.type==='Pagar').reduce((total, entry)=>total+entry.amount,0);
+  return <Section eyebrow="Etapa 5" title="Financeiro e relatórios" actions={<Activity/>}><div className="metrics-grid"><article className="metric-card"><small>Contas a receber</small><strong>{currency.format(receivable)}</strong></article><article className="metric-card"><small>Contas a pagar</small><strong>{currency.format(payable)}</strong></article><article className="metric-card"><small>Fluxo de caixa</small><strong>{currency.format(cashFlow)}</strong></article></div><div className="records-grid">{finance.map((entry)=><article className="record-card" key={entry.id}><strong>{entry.type}</strong><span>{entry.description}</span><span>{entry.dueDate} · {entry.paid ? 'Pago' : 'Aberto'}</span><strong>{currency.format(entry.amount)}</strong></article>)}</div></Section>;
 }
 
 export default App;
