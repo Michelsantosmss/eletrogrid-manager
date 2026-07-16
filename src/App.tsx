@@ -12,6 +12,7 @@ import {
   Gauge,
   MapPin,
   Search,
+  ShieldCheck,
   UsersRound,
   Zap,
 } from 'lucide-react';
@@ -34,6 +35,21 @@ type Team = {
   eta: string;
 };
 
+type Customer = {
+  name: string;
+  segment: string;
+  demand: string;
+  status: 'Normal' | 'Atenção' | 'Crítico';
+  region: string;
+};
+
+type Asset = {
+  name: string;
+  region: string;
+  load: number;
+  health: number;
+};
+
 const teams: Team[] = [
   { name: 'Equipe Alfa', area: 'Subestação Norte', status: 'Em atendimento', eta: '14 min' },
   { name: 'Equipe Delta', area: 'Alimentador C-17', status: 'Inspeção preventiva', eta: '38 min' },
@@ -48,11 +64,25 @@ const initialTickets: ServiceOrder[] = [
 
 const priorityOptions: Priority[] = ['Alta', 'Média', 'Baixa'];
 
+const customers: Customer[] = [
+  { name: 'Hospital São Lucas', segment: 'Saúde', demand: '1,8 MW', status: 'Crítico', region: 'Norte' },
+  { name: 'Condomínio Ipê', segment: 'Residencial', demand: '820 kW', status: 'Atenção', region: 'Centro' },
+  { name: 'Mercado Central', segment: 'Comercial', demand: '460 kW', status: 'Normal', region: 'Sul' },
+  { name: 'Indústria Aurora', segment: 'Industrial', demand: '3,2 MW', status: 'Normal', region: 'Leste' },
+];
+
+const assets: Asset[] = [
+  { name: 'Subestação Norte', region: 'Norte', load: 78, health: 92 },
+  { name: 'Alimentador C-17', region: 'Centro', load: 86, health: 81 },
+  { name: 'Transformador TR-04', region: 'Sul', load: 64, health: 96 },
+];
+
 function App() {
   const [tickets, setTickets] = useState<ServiceOrder[]>(initialTickets);
   const [query, setQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<'Todas' | Priority>('Todas');
   const [newTicket, setNewTicket] = useState({ customer: '', issue: '', priority: 'Média' as Priority });
+  const [activeRegion, setActiveRegion] = useState<'Todas' | Customer['region']>('Todas');
 
   const filteredTickets = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -64,10 +94,15 @@ function App() {
     });
   }, [priorityFilter, query, tickets]);
 
+  const visibleCustomers = useMemo(() => (
+    activeRegion === 'Todas' ? customers : customers.filter((customer) => customer.region === activeRegion)
+  ), [activeRegion]);
+
   const criticalTickets = tickets.filter((ticket) => ticket.priority === 'Alta').length;
   const availableTeams = teams.filter((team) => team.status === 'Disponível').length;
   const monitoredNetwork = criticalTickets > 2 ? '96,9%' : '98,7%';
   const nextTicketId = `OS-${2048 + tickets.length}`;
+  const regions = ['Todas', ...Array.from(new Set(customers.map((customer) => customer.region)))] as const;
 
   const metrics = [
     { label: 'Unidades consumidoras', value: '3.248', trend: '+12%', icon: Building2 },
@@ -189,6 +224,73 @@ function App() {
                     <span>{team.area}</span>
                   </div>
                   <small>{team.status} · {team.eta}</small>
+                </div>
+              ))}
+            </div>
+          </article>
+        </section>
+
+        <section className="panel-grid business-grid" id="clientes">
+          <article className="panel">
+            <div className="panel-heading compact">
+              <div>
+                <span className="eyebrow">Clientes</span>
+                <h2>Carteira monitorada</h2>
+              </div>
+              <UsersRound size={18} />
+            </div>
+            <div className="filter-group customer-filter" aria-label="Filtro por região">
+              {regions.map((region) => (
+                <button
+                  className={activeRegion === region ? 'ghost-button active' : 'ghost-button'}
+                  key={region}
+                  onClick={() => setActiveRegion(region)}
+                  type="button"
+                >
+                  {region}
+                </button>
+              ))}
+            </div>
+            <div className="customer-list">
+              {visibleCustomers.map((customer) => (
+                <div className="customer-card" key={customer.name}>
+                  <div>
+                    <strong>{customer.name}</strong>
+                    <span>{customer.segment} · {customer.region}</span>
+                  </div>
+                  <div>
+                    <small>Demanda</small>
+                    <strong>{customer.demand}</strong>
+                  </div>
+                  <span className={`status ${customer.status.toLowerCase()}`}>{customer.status}</span>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="panel">
+            <div className="panel-heading compact">
+              <div>
+                <span className="eyebrow">Ativos</span>
+                <h2>Saúde da infraestrutura</h2>
+              </div>
+              <ShieldCheck size={18} />
+            </div>
+            <div className="asset-list">
+              {assets.map((asset) => (
+                <div className="asset-row" key={asset.name}>
+                  <div className="asset-title">
+                    <strong>{asset.name}</strong>
+                    <span>{asset.region}</span>
+                  </div>
+                  <label>
+                    Carga {asset.load}%
+                    <progress max="100" value={asset.load}>{asset.load}%</progress>
+                  </label>
+                  <label>
+                    Saúde {asset.health}%
+                    <progress max="100" value={asset.health}>{asset.health}%</progress>
+                  </label>
                 </div>
               ))}
             </div>
