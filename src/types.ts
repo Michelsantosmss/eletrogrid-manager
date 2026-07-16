@@ -29,6 +29,7 @@ export type ServiceOrder = {
   problem: string;
   diagnosis: string;
   history: Array<{ at: string; status: ServiceStatus; note: string }>;
+  documents?: Array<{ name: string; url: string }>;
 };
 
 export type Quote = {

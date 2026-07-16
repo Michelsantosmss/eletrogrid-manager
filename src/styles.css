@@ -98,3 +98,7 @@ progress::-moz-progress-bar { background: linear-gradient(90deg, #1373e6, #26c6d
 button:disabled { cursor: not-allowed; opacity: .65; }
 details { grid-column: 1 / -1; color: #66758d; }
 @media (max-width: 1100px) { .crud-form, .records-grid, .record-card.wide { grid-template-columns: 1fr; } }
+.file-button { border-radius: 14px; background: #eef4fb; color: #1373e6; cursor: pointer; display: inline-flex; justify-content: center; padding: 12px 16px; }
+.file-button input { inline-size: 1px; block-size: 1px; opacity: 0; overflow: hidden; position: absolute; }
+.document-list { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.document-list a { background: #e7f8ef; border-radius: 999px; color: #0b7a4b; padding: 7px 10px; text-decoration: none; }

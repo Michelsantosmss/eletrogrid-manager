@@ -1,7 +1,8 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { Activity, BanknoteArrowUp, FileText, HardDrive, LogOut, Search, ShieldCheck, UserRoundPlus, UsersRound, Wrench, Zap } from 'lucide-react';
 import { Section } from './components/Section';
-import { loginWithEmail, logout, registerWithEmail, saveRecord } from './services/firebase';
+import { loginWithEmail, logout, registerWithEmail, saveRecord, uploadServiceFile } from './services/firebase';
+import { usePersistentState } from './hooks/usePersistentState';
 import { clientsSeed, equipmentSeed, financeSeed, orderSeed, quoteSeed } from './services/seedData';
 import { Client, Equipment, FinanceEntry, Quote, ServiceOrder, ServiceStatus } from './types';
 import './styles.css';
@@ -20,11 +21,11 @@ function App() {
   const [isAuthenticated, setAuthenticated] = useState(false);
   const [activeModule, setActiveModule] = useState<Module>('Dashboard');
   const [search, setSearch] = useState('');
-  const [clients, setClients] = useState<Client[]>(clientsSeed);
-  const [equipment, setEquipment] = useState<Equipment[]>(equipmentSeed);
-  const [orders, setOrders] = useState<ServiceOrder[]>(orderSeed);
-  const [quotes, setQuotes] = useState<Quote[]>(quoteSeed);
-  const [finance, setFinance] = useState<FinanceEntry[]>(financeSeed);
+  const [clients, setClients] = usePersistentState<Client[]>('eletrogrid:clients', clientsSeed);
+  const [equipment, setEquipment] = usePersistentState<Equipment[]>('eletrogrid:equipment', equipmentSeed);
+  const [orders, setOrders] = usePersistentState<ServiceOrder[]>('eletrogrid:orders', orderSeed);
+  const [quotes, setQuotes] = usePersistentState<Quote[]>('eletrogrid:quotes', quoteSeed);
+  const [finance, setFinance] = usePersistentState<FinanceEntry[]>('eletrogrid:finance', financeSeed);
   const [clientForm, setClientForm] = useState({ name: '', document: '', phone: '', email: '', city: '' });
   const [equipmentForm, setEquipmentForm] = useState({ clientId: 'cli-1', category: 'Eletrônico' as Equipment['category'], brand: '', model: '', serial: '', notes: '' });
   const [orderForm, setOrderForm] = useState({ clientId: 'cli-1', equipmentId: 'eq-1', problem: '', diagnosis: '' });
@@ -34,7 +35,7 @@ function App() {
   const cashFlow = finance.reduce((total, entry) => total + (entry.type === 'Receber' ? entry.amount : -entry.amount), 0);
   const openOrders = orders.filter((order) => !['Finalizado', 'Entregue'].includes(order.status)).length;
 
-  async function handleAuth(event: FormEvent<HTMLFormElement>, mode: 'login' | 'register') {
+  async function handleAuth(event: FormEvent, mode: 'login' | 'register') {
     event.preventDefault();
     setAuthError('');
     try {
@@ -88,6 +89,24 @@ function App() {
     } : order));
   }
 
+
+  async function uploadOrderDocument(orderId: string, file: File) {
+    const fallbackUrl = `demo://${orderId}/${file.name}`;
+    let url = fallbackUrl;
+
+    try {
+      url = await uploadServiceFile(orderId, file);
+    } catch (error) {
+      console.warn('Upload no Firebase Storage indisponível; mantendo documento em modo demonstração.', error);
+    }
+
+    setOrders((current) => current.map((order) => order.id === orderId ? {
+      ...order,
+      documents: [...(order.documents ?? []), { name: file.name, url }],
+      history: [...order.history, { at: new Date().toLocaleString('pt-BR'), status: order.status, note: `Documento anexado: ${file.name}.` }],
+    } : order));
+  }
+
   function createQuote(orderId: string) {
     const quote: Quote = { id: makeId('quote'), serviceOrderId: orderId, parts: 350, labor: 250, discount: 0, approved: false };
     setQuotes((current) => [quote, ...current]);
@@ -112,7 +131,7 @@ function App() {
           <input aria-label="Senha" minLength={6} onChange={(event) => setPassword(event.target.value)} placeholder="Senha" type="password" value={password} required />
           {authError && <strong className="form-error">{authError}</strong>}
           <button type="submit">Entrar com Firebase</button>
-          <button className="ghost-button" onClick={(event) => handleAuth(event as unknown as FormEvent<HTMLFormElement>, 'register')} type="button">Criar acesso</button>
+          <button className="ghost-button" onClick={(event) => handleAuth(event, 'register')} type="button">Criar acesso</button>
           <button className="link-button" onClick={() => setAuthenticated(true)} type="button">Acessar modo demonstração</button>
         </form>
       </main>
@@ -131,7 +150,7 @@ function App() {
         {activeModule === 'Dashboard' && <Dashboard clients={clients.length} equipment={equipment.length} openOrders={openOrders} cashFlow={cashFlow} />}
         {activeModule === 'Clientes' && <ClientsModule addClient={addClient} clients={filteredClients} form={clientForm} remove={(id) => setClients((current) => current.filter((client) => client.id !== id))} setForm={setClientForm} />}
         {activeModule === 'Equipamentos' && <EquipmentModule addEquipment={addEquipment} clients={clients} equipment={filteredEquipment} form={equipmentForm} remove={(id) => setEquipment((current) => current.filter((item) => item.id !== id))} setForm={setEquipmentForm} />}
-        {activeModule === 'Ordens de serviço' && <OrdersModule addOrder={addOrder} clients={clients} createQuote={createQuote} equipment={equipment} form={orderForm} orders={orders} setForm={setOrderForm} updateStatus={updateOrderStatus} />}
+        {activeModule === 'Ordens de serviço' && <OrdersModule addOrder={addOrder} clients={clients} createQuote={createQuote} equipment={equipment} form={orderForm} orders={orders} setForm={setOrderForm} updateStatus={updateOrderStatus} uploadDocument={uploadOrderDocument} />}
         {activeModule === 'Orçamentos' && <QuotesModule approveQuote={approveQuote} quotes={quotes} />}
         {activeModule === 'Financeiro' && <FinanceModule cashFlow={cashFlow} finance={finance} />}
       </section>
@@ -152,8 +171,8 @@ function EquipmentModule(props: { clients: Client[]; equipment: Equipment[]; for
   return <Section eyebrow="Etapa 2" title="Cadastro de equipamentos" actions={<HardDrive/>}><form className="crud-form" onSubmit={props.addEquipment}><select value={props.form.clientId} onChange={(event)=>props.setForm({...props.form,clientId:event.target.value})}>{props.clients.map((client)=><option key={client.id} value={client.id}>{client.name}</option>)}</select><select value={props.form.category} onChange={(event)=>props.setForm({...props.form,category:event.target.value as Equipment['category']})}><option>Eletrônico</option><option>Energia solar</option><option>Elétrico</option></select><input placeholder="Marca" value={props.form.brand} onChange={(event)=>props.setForm({...props.form,brand:event.target.value})} required/><input placeholder="Modelo" value={props.form.model} onChange={(event)=>props.setForm({...props.form,model:event.target.value})} required/><input placeholder="Série" value={props.form.serial} onChange={(event)=>props.setForm({...props.form,serial:event.target.value})}/><input placeholder="Observações" value={props.form.notes} onChange={(event)=>props.setForm({...props.form,notes:event.target.value})}/><button type="submit">Salvar equipamento</button></form><div className="records-grid">{props.equipment.map((item)=><article className="record-card" key={item.id}><strong>{item.brand} {item.model}</strong><span>{item.category} · {item.serial}</span><span>{item.notes}</span><button className="danger-button" onClick={()=>props.remove(item.id)} type="button">Excluir</button></article>)}</div></Section>;
 }
 
-function OrdersModule(props: { clients: Client[]; equipment: Equipment[]; orders: ServiceOrder[]; form: { clientId: string; equipmentId: string; problem: string; diagnosis: string }; setForm: (form: { clientId: string; equipmentId: string; problem: string; diagnosis: string }) => void; addOrder: (event: FormEvent<HTMLFormElement>) => void; updateStatus: (id: string, status: ServiceStatus) => void; createQuote: (id: string) => void }) {
-  return <Section eyebrow="Etapa 3" title="Ordens de serviço"><form className="crud-form" onSubmit={props.addOrder}><select value={props.form.clientId} onChange={(event)=>props.setForm({...props.form,clientId:event.target.value})}>{props.clients.map((client)=><option key={client.id} value={client.id}>{client.name}</option>)}</select><select value={props.form.equipmentId} onChange={(event)=>props.setForm({...props.form,equipmentId:event.target.value})}>{props.equipment.map((item)=><option key={item.id} value={item.id}>{item.brand} {item.model}</option>)}</select><input placeholder="Problema relatado" value={props.form.problem} onChange={(event)=>props.setForm({...props.form,problem:event.target.value})} required/><input placeholder="Diagnóstico inicial" value={props.form.diagnosis} onChange={(event)=>props.setForm({...props.form,diagnosis:event.target.value})}/><button type="submit">Registrar entrada</button></form><div className="order-list">{props.orders.map((order)=><article className="record-card wide" key={order.id}><div><strong>{order.id.toUpperCase()} · {order.status}</strong><span>Entrada: {order.intakeDate} {order.exitDate ? `· Saída: ${order.exitDate}` : ''}</span><p>{order.problem}</p></div><select value={order.status} onChange={(event)=>props.updateStatus(order.id,event.target.value as ServiceStatus)}>{serviceStatuses.map((status)=><option key={status}>{status}</option>)}</select><button onClick={()=>props.createQuote(order.id)} type="button">Gerar orçamento</button><details><summary>Histórico completo</summary>{order.history.map((item)=><p key={`${item.at}-${item.status}`}>{item.at} · {item.status} · {item.note}</p>)}</details></article>)}</div></Section>;
+function OrdersModule(props: { clients: Client[]; equipment: Equipment[]; orders: ServiceOrder[]; form: { clientId: string; equipmentId: string; problem: string; diagnosis: string }; setForm: (form: { clientId: string; equipmentId: string; problem: string; diagnosis: string }) => void; addOrder: (event: FormEvent<HTMLFormElement>) => void; updateStatus: (id: string, status: ServiceStatus) => void; createQuote: (id: string) => void; uploadDocument: (id: string, file: File) => void }) {
+  return <Section eyebrow="Etapa 3" title="Ordens de serviço"><form className="crud-form" onSubmit={props.addOrder}><select value={props.form.clientId} onChange={(event)=>props.setForm({...props.form,clientId:event.target.value})}>{props.clients.map((client)=><option key={client.id} value={client.id}>{client.name}</option>)}</select><select value={props.form.equipmentId} onChange={(event)=>props.setForm({...props.form,equipmentId:event.target.value})}>{props.equipment.map((item)=><option key={item.id} value={item.id}>{item.brand} {item.model}</option>)}</select><input placeholder="Problema relatado" value={props.form.problem} onChange={(event)=>props.setForm({...props.form,problem:event.target.value})} required/><input placeholder="Diagnóstico inicial" value={props.form.diagnosis} onChange={(event)=>props.setForm({...props.form,diagnosis:event.target.value})}/><button type="submit">Registrar entrada</button></form><div className="order-list">{props.orders.map((order)=><article className="record-card wide" key={order.id}><div><strong>{order.id.toUpperCase()} · {order.status}</strong><span>Entrada: {order.intakeDate} {order.exitDate ? `· Saída: ${order.exitDate}` : ''}</span><p>{order.problem}</p></div><select value={order.status} onChange={(event)=>props.updateStatus(order.id,event.target.value as ServiceStatus)}>{serviceStatuses.map((status)=><option key={status}>{status}</option>)}</select><button onClick={()=>props.createQuote(order.id)} type="button">Gerar orçamento</button><label className="file-button">Anexar arquivo<input aria-label={`Anexar arquivo ${order.id}`} type="file" onChange={(event)=>{ const file = event.target.files?.[0]; if (file) props.uploadDocument(order.id, file); }}/></label>{Boolean(order.documents?.length) && <div className="document-list">{order.documents?.map((document)=><a href={document.url} key={`${order.id}-${document.name}`}>{document.name}</a>)}</div>}<details><summary>Histórico completo</summary>{order.history.map((item)=><p key={`${item.at}-${item.status}`}>{item.at} · {item.status} · {item.note}</p>)}</details></article>)}</div></Section>;
 }
 
 function QuotesModule({ quotes, approveQuote }: { quotes: Quote[]; approveQuote: (id: string) => void }) {
