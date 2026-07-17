@@ -34,7 +34,7 @@ test('cria uma OS numerada e vincula uma etiqueta QR ao equipamento', () => {
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
   fireEvent.click(screen.getByRole('button', { name: /Ordens de servi/i }));
   fireEvent.change(screen.getByPlaceholderText('Problema relatado'), { target: { value: 'Teste da etiqueta QR' } });
-  fireEvent.click(screen.getByRole('button', { name: /Registrar entrada/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Gerar OS automaticamente/i }));
 
   expect(screen.getByText('OS-000003 · Recebido')).toBeInTheDocument();
   expect(screen.getByText('Etiqueta QR do equipamento')).toBeInTheDocument();
