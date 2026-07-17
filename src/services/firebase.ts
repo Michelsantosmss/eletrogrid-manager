@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { addDoc, collection, deleteDoc, doc, getFirestore, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getFirestore, onSnapshot, setDoc } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -16,6 +16,9 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const firebaseEnabled = Boolean(
+  import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID,
+);
 
 export async function loginWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
@@ -30,9 +33,6 @@ export async function logout() {
 }
 
 export async function saveRecord<T extends { id: string }>(path: string, record: T) {
-  if (record.id.startsWith('tmp-')) {
-    return addDoc(collection(db, path), record);
-  }
   return setDoc(doc(db, path, record.id), record, { merge: true });
 }
 
@@ -44,4 +44,16 @@ export async function uploadServiceFile(serviceOrderId: string, file: File) {
   const fileRef = ref(storage, `service-orders/${serviceOrderId}/${file.name}`);
   await uploadBytes(fileRef, file);
   return getDownloadURL(fileRef);
+}
+
+export function subscribeToCollection<T extends { id: string }>(
+  path: string,
+  onData: (items: T[]) => void,
+  onError: (error: Error) => void,
+) {
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => onData(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as T)),
+    (error) => onError(error),
+  );
 }
