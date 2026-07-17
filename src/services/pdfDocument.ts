@@ -6,26 +6,49 @@ const orange = [246, 139, 31] as const;
 
 export async function createPdf(title: string, reference: string) {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  pdf.setFillColor(...navy);
+  pdf.rect(0, 0, 210, 42, 'F');
   try {
-    const response = await fetch(logoUrl);
-    const logo = new Uint8Array(await response.arrayBuffer());
-    pdf.addImage(logo, 'JPEG', 14, 10, 38, 22, undefined, 'FAST');
+    const image = new Image();
+    image.src = logoUrl;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 500;
+    canvas.height = 400;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Canvas indisponível');
+    context.drawImage(image, 105, 235, 500, 400, 0, 0, 500, 400);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 8, 6, 28, 22.4, undefined, 'FAST');
   } catch {
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(18);
-    pdf.setTextColor(...navy);
-    pdf.text('ELETROGRID', 14, 23);
+    pdf.setFontSize(19);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text('EG', 12, 23);
   }
-  pdf.setDrawColor(...orange);
-  pdf.setLineWidth(1.5);
-  pdf.line(14, 35, 196, 35);
-  pdf.setTextColor(...navy);
+  pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(17);
-  pdf.text(title, 196, 18, { align: 'right' });
-  pdf.setFontSize(10);
-  pdf.text(reference.toUpperCase(), 196, 26, { align: 'right' });
-  return { pdf, y: 44 };
+  pdf.setFontSize(13);
+  pdf.text('ELETRO', 39, 15);
+  pdf.setTextColor(...orange);
+  pdf.text('GRID', 61, 15);
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(6.7);
+  pdf.text(['soluções em eletrônica,', 'energia solar e', 'serviços elétricos'], 39, 21);
+  pdf.setDrawColor(255, 255, 255);
+  pdf.setLineWidth(0.7);
+  pdf.line(82, 6, 82, 35);
+  pdf.setTextColor(...orange);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(title.length > 18 ? 18 : 22);
+  pdf.text(title, 90, 21);
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(8);
+  pdf.text(reference.toUpperCase(), 90, 29);
+  pdf.setFillColor(...orange);
+  pdf.rect(0, 40, 116, 1.4, 'F');
+  pdf.triangle(116, 40, 120, 41.4, 116, 41.4, 'F');
+  return { pdf, y: 49 };
 }
 
 export function addSection(pdf: jsPDF, y: number, title: string, content: string) {
