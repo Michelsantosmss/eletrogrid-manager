@@ -112,7 +112,7 @@ body { background: #edf1f6; }
 .sidebar { background: linear-gradient(180deg, #071d43 0%, #041634 100%); padding: 22px 14px; gap: 24px; box-shadow: 8px 0 24px rgba(3, 20, 51, .12); }
 .brand { padding: 0 10px 16px; border-bottom: 1px solid rgba(255,255,255,.12); }
 .brand-mark { width: 64px; height: 48px; flex: 0 0 auto; overflow: hidden; display: block; border-radius: 6px; background: #063b7a; }
-.brand-mark img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center 14%; }
+.brand-mark img { width: 100%; height: 100%; display: block; object-fit: contain; object-position: center; }
 .brand strong { font-size: 1.07rem; letter-spacing: .03em; text-transform: uppercase; }
 .brand strong::first-letter { color: inherit; }
 .brand small { color: #f68b1f; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
@@ -149,7 +149,7 @@ button:hover { background: #083b82; }
 .login-screen { background: radial-gradient(circle at 75% 15%, rgba(246,139,31,.2), transparent 25%), linear-gradient(135deg, #041634, #0b3475); }
 .login-card { border-radius: 10px; border-top: 4px solid #f68b1f; }
 .login-card .brand-mark { width: 116px; height: 64px; margin-bottom: 8px; background: #063b7a; }
-.login-card .brand-mark img { object-position: center 29%; }
+.login-card .brand-mark img { object-position: center; transform: scale(1.42); }
 .login-card h1 { color: white; }
 .login-card p { color: #d7e7ff; }
 .login-card > button[type="submit"] { background: #f68b1f; }
