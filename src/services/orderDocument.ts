@@ -3,8 +3,9 @@ import { Client, Equipment, ServiceOrder } from '../types';
 const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character] ?? character));
 
 export function printServiceOrder(order: ServiceOrder, client?: Client, equipment?: Equipment) {
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+  const printWindow = window.open('', '_blank');
   if (!printWindow) return;
+  printWindow.opener = null;
   const clientName = client?.name ?? 'Cliente não identificado';
   const equipmentName = equipment ? `${equipment.brand} ${equipment.model}` : 'Equipamento não identificado';
   const history = order.history.map((entry) => `<tr><td>${escapeHtml(entry.at)}</td><td>${escapeHtml(entry.status)}</td><td>${escapeHtml(entry.note)}</td></tr>`).join('');
