@@ -29,8 +29,9 @@ export async function createPdf(title: string, reference: string) {
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(13);
   pdf.text('ELETRO', 39, 15);
+  const eletroWidth = pdf.getTextWidth('ELETRO');
   pdf.setTextColor(...orange);
-  pdf.text('GRID', 61, 15);
+  pdf.text('GRID', 39 + eletroWidth, 15);
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(6.7);
