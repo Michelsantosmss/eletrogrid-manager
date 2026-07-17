@@ -1,6 +1,12 @@
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
+
+vi.mock('./services/firebase', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./services/firebase')>(),
+  firebaseEnabled: false,
+}));
+
 import App from './App';
 
 afterEach(cleanup);
