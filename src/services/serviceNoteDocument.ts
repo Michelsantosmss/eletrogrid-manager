@@ -1,12 +1,17 @@
 import { Client, Equipment, ServiceOrder } from '../types';
+import { addFooter, addSection, createPdf, downloadPdf } from './pdfDocument';
 
-const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character] ?? character));
-
-export function printServiceNote(order: ServiceOrder, client?: Client, equipment?: Equipment) {
-  const popup = window.open('', '_blank');
-  if (!popup) return;
-  popup.document.open();
-  popup.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Nota de serviço ${order.id.toUpperCase()}</title><style>*{box-sizing:border-box}body{margin:0;color:#122342;font:13px Arial,sans-serif}.page{width:210mm;min-height:297mm;margin:auto;padding:14mm}.header{display:flex;justify-content:space-between;border-bottom:5px solid #f68b1f;padding-bottom:12px}.brand{font-size:20px;font-weight:900;color:#08295d}.brand b{color:#f68b1f}.title{text-align:right;color:#0a306d}.title h1{font-size:20px;margin:0}.box{border:1px solid #cbd5e1;margin-top:16px;padding:11px}.box h2{font-size:10px;color:#0a306d;margin:-11px -11px 10px;padding:7px 11px;background:#edf3fb;text-transform:uppercase}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}.signatures{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:60px}.signature{border-top:1px solid #334155;text-align:center;padding-top:8px}.footer{position:fixed;bottom:10mm;left:14mm;right:14mm;border-top:3px solid #0a306d;padding-top:8px;color:#53657f;display:flex;justify-content:space-between;font-size:9px}@media print{.page{padding:0}}</style></head><body><main class="page"><header class="header"><div class="brand">ELETRO<b>GRID</b></div><div class="title"><h1>NOTA DE SERVIÇO</h1><p>${order.id.toUpperCase()}</p></div></header><section class="grid"><article class="box"><h2>Cliente</h2><p><b>${escapeHtml(client?.name ?? 'Não identificado')}</b></p><p>${escapeHtml(client?.phone ?? '-')} · ${escapeHtml(client?.city ?? '-')}</p></article><article class="box"><h2>Equipamento</h2><p><b>${escapeHtml(equipment ? `${equipment.brand} ${equipment.model}` : 'Não identificado')}</b></p><p>Série/IMEI: ${escapeHtml(equipment?.serial ?? '-')}</p></article><article class="box full"><h2>Defeito relatado</h2><p>${escapeHtml(order.problem)}</p></article><article class="box full"><h2>Diagnóstico técnico</h2><p>${escapeHtml(order.diagnosis || '-')}</p></article><article class="box full"><h2>Serviços executados</h2><p>${escapeHtml(order.servicePerformed || 'Aguardando registro dos serviços executados.')}</p></article><article class="box"><h2>Garantia</h2><p>${escapeHtml(order.warranty || '-')}</p></article><article class="box"><h2>Conclusão</h2><p>Status: ${escapeHtml(order.status)}</p><p>Entrada: ${escapeHtml(order.intakeDate)} · Saída: ${escapeHtml(order.exitDate || '-')}</p></article><article class="box full"><h2>Observações técnicas</h2><p>${escapeHtml(order.technicianNotes || '-')}</p></article></section><section class="signatures"><div class="signature">Responsável técnico</div><div class="signature">Cliente</div></section><footer class="footer"><span>EletroGrid Manager · Nota de serviço ${order.id.toUpperCase()}</span><span>Gerada em ${new Date().toLocaleString('pt-BR')}</span></footer></main><script>window.onload=()=>window.print()</script></body></html>`);
-  popup.document.close();
-  popup.opener = null;
+export async function printServiceNote(order: ServiceOrder, client?: Client, equipment?: Equipment) {
+  const { pdf, y: startY } = await createPdf('NOTA DE SERVIÇO', order.id.toUpperCase());
+  let y = addSection(pdf, startY, 'Cliente', `${client?.name ?? 'Não identificado'}\nTelefone: ${client?.phone ?? '-'}\nCidade: ${client?.city ?? '-'}`);
+  y = addSection(pdf, y, 'Equipamento', `${equipment ? `${equipment.brand} ${equipment.model}` : 'Não identificado'}\nSérie/IMEI: ${equipment?.serial ?? '-'}`);
+  y = addSection(pdf, y, 'Defeito relatado', order.problem);
+  y = addSection(pdf, y, 'Diagnóstico técnico', order.diagnosis || '-');
+  y = addSection(pdf, y, 'Serviços executados', order.servicePerformed || 'Aguardando registro dos serviços executados.');
+  y = addSection(pdf, y, 'Garantia', order.warranty || '-');
+  y = addSection(pdf, y, 'Observações técnicas', order.technicianNotes || '-');
+  y = addSection(pdf, y, 'Conclusão', `Status: ${order.status}\nEntrada: ${order.intakeDate}\nSaída: ${order.exitDate || '-'}`);
+  addSection(pdf, y, 'Assinaturas', '\n\nResponsável técnico: ______________________________\n\nCliente: _________________________________________');
+  addFooter(pdf, `Nota de Serviço ${order.id.toUpperCase()}`);
+  downloadPdf(pdf, `nota-de-servico-${order.id.toLowerCase()}.pdf`);
 }
