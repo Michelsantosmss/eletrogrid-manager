@@ -104,3 +104,56 @@ details { grid-column: 1 / -1; color: #66758d; }
 .document-list a { background: #e7f8ef; border-radius: 999px; color: #0b7a4b; padding: 7px 10px; text-decoration: none; }
 .card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .filter-group select { border: 1px solid #d7e2f0; border-radius: 12px; padding: 9px 12px; background: white; color: #172033; }
+
+/* EletroGrid visual system: navy operation console, orange highlights and compact data cards. */
+:root { color: #142033; background: #edf1f6; }
+body { background: #edf1f6; }
+.app-shell { grid-template-columns: 252px minmax(0, 1fr); background: #edf1f6; }
+.sidebar { background: linear-gradient(180deg, #071d43 0%, #041634 100%); padding: 22px 14px; gap: 24px; box-shadow: 8px 0 24px rgba(3, 20, 51, .12); }
+.brand { padding: 0 10px 16px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.brand-mark { width: 56px; height: 48px; border-radius: 8px; background: #fff; color: #0a2a60; position: relative; overflow: hidden; box-shadow: none; }
+.brand-mark svg { display: none; }
+.brand-mark::after { content: 'EG'; color: #0a2a60; font-size: 1.2rem; font-style: italic; font-weight: 950; letter-spacing: -3px; padding-right: 3px; }
+.brand-mark::before { content: ''; position: absolute; width: 13px; height: 52px; background: #f68b1f; transform: rotate(35deg); left: 24px; top: -4px; z-index: 1; opacity: .98; }
+.brand strong { font-size: 1.07rem; letter-spacing: .03em; text-transform: uppercase; }
+.brand strong::first-letter { color: inherit; }
+.brand small { color: #f68b1f; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+nav { gap: 5px; }
+.nav-button { min-height: 42px; border-radius: 7px; padding: 10px 12px; font-size: .91rem; }
+.nav-button.active { color: #ffad3e; background: rgba(246,139,31,.18); box-shadow: inset 3px 0 #f68b1f; }
+.nav-button:hover { background: rgba(255,255,255,.09); }
+.logout-button { border-radius: 7px; background: rgba(255,255,255,.07); }
+.content { padding: 0 28px 32px; gap: 20px; }
+.hero { margin: 0 -28px 6px; padding: 18px 28px; border-radius: 0; grid-template-columns: minmax(0, 1fr) 360px; align-items: center; background: linear-gradient(90deg, #09275a, #123d7e); box-shadow: none; color: white; }
+.hero .eyebrow { color: #ffad3e; }
+.hero h1 { font-size: clamp(1.35rem, 2.6vw, 2rem); margin: 3px 0; line-height: 1.15; max-width: none; }
+.hero p { display: none; }
+.search-box { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.12); color: white; border-radius: 7px; padding: 11px 13px; }
+.search-box input { color: white; background: transparent; font-size: .86rem; }
+.search-box input::placeholder { color: #c7d6ec; }
+.search-box:focus-within { border-color: #f68b1f; box-shadow: 0 0 0 3px rgba(246,139,31,.22); }
+.metrics-grid { gap: 13px; }
+.metric-card, .panel { border: 1px solid #e2e7ee; border-radius: 8px; padding: 17px; box-shadow: 0 5px 17px rgba(24, 45, 75, .06); }
+.metric-card { border-top: 3px solid #0b3c85; min-height: 126px; }
+.metric-card:nth-child(2) { border-top-color: #f68b1f; }
+.metric-card:nth-child(3) { border-top-color: #7e4bc6; }
+.metric-card:nth-child(4) { border-top-color: #29a36a; }
+.metric-card span, .eyebrow { color: #f68b1f; }
+.metric-card small { color: #68778c; font-weight: 700; }
+.metric-card strong { color: #0b285a; font-size: 1.85rem; }
+.metric-card em { color: #16895a; font-size: .78rem; }
+.panel-heading { border-bottom: 1px solid #edf0f4; padding-bottom: 13px; }
+.panel-heading h2 { color: #0b285a; font-size: 1.25rem; }
+button { border-radius: 7px; background: #0c4ca3; font-weight: 700; }
+button:hover { background: #083b82; }
+.ghost-button { background: #edf3fb; color: #0c4ca3; }
+.danger-button { background: #fff0ee; color: #b73c2c; }
+.login-screen { background: radial-gradient(circle at 75% 15%, rgba(246,139,31,.2), transparent 25%), linear-gradient(135deg, #041634, #0b3475); }
+.login-card { border-radius: 10px; border-top: 4px solid #f68b1f; }
+.login-card .brand-mark { margin-bottom: 8px; }
+.login-card h1 { color: #0b285a; }
+.crud-form input, .crud-form select, .filter-group select { border-radius: 7px; border-color: #d8e0eb; }
+.record-card { border-radius: 7px; border-color: #e1e7ef; }
+.record-card:hover { border-color: #aac4e6; box-shadow: 0 5px 14px rgba(17, 50, 96, .08); }
+.file-button { border-radius: 7px; color: #0c4ca3; }
+@media (max-width: 980px) { .app-shell { grid-template-columns: 1fr; } .sidebar { padding: 15px; } .hero { margin: 0 -20px 6px; padding: 16px 20px; } .content { padding: 0 20px 24px; } }
