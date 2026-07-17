@@ -14,6 +14,14 @@ const modules = ['Dashboard', 'Clientes', 'Equipamentos', 'Ordens de serviço', 
 type Module = typeof modules[number];
 const today = () => new Date().toISOString().slice(0, 10);
 const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
+const nextOrderId = (orders: ServiceOrder[]) => {
+  const highest = orders.reduce((current, order) => Math.max(current, Number(order.id.match(/(\d+)$/)?.[1] ?? 0)), 0);
+  return `os-${String(highest + 1).padStart(6, '0')}`;
+};
+const equipmentQr = (orderId: string, equipmentId: string) => {
+  const value = `ELETROGRID|${orderId.toUpperCase()}|${equipmentId}`;
+  return { value, url: `https://api.qrserver.com/v1/create-qr-code/?size=260x260&format=png&data=${encodeURIComponent(value)}` };
+};
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const emptyClient = { name: '', document: '', phone: '', email: '', city: '' };
 
@@ -84,7 +92,9 @@ function App() {
   async function deleteEquipment(id: string) { setEquipment((items) => items.filter((item) => item.id !== id)); await destroy('equipment', id); }
   async function submitOrder(event: FormEvent) {
     event.preventDefault();
-    const record: ServiceOrder = { id: makeId('os'), ...orderForm, status: 'Recebido', intakeDate: today(), history: [{ at: new Date().toLocaleString('pt-BR'), status: 'Recebido', note: 'Entrada registrada no sistema.' }], documents: [] };
+    const id = nextOrderId(orders);
+    const qrCode = equipmentQr(id, orderForm.equipmentId);
+    const record: ServiceOrder = { id, ...orderForm, qrCode, status: 'Recebido', intakeDate: today(), history: [{ at: new Date().toLocaleString('pt-BR'), status: 'Recebido', note: `Entrada registrada. Etiqueta QR criada: ${qrCode.value}.` }], documents: [{ name: 'Etiqueta QR do equipamento', url: qrCode.url }] };
     setOrders((items) => [record, ...items]); await persist('serviceOrders', record);
     setOrderForm({ clientId: clients[0]?.id ?? '', equipmentId: equipment[0]?.id ?? '', problem: '', diagnosis: '' });
   }
