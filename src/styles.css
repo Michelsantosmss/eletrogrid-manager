@@ -102,3 +102,5 @@ details { grid-column: 1 / -1; color: #66758d; }
 .file-button input { inline-size: 1px; block-size: 1px; opacity: 0; overflow: hidden; position: absolute; }
 .document-list { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
 .document-list a { background: #e7f8ef; border-radius: 999px; color: #0b7a4b; padding: 7px 10px; text-decoration: none; }
+.card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter-group select { border: 1px solid #d7e2f0; border-radius: 12px; padding: 9px 12px; background: white; color: #172033; }
