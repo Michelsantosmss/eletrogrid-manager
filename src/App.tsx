@@ -107,7 +107,10 @@ function App() {
     try {
       const url = firebaseEnabled ? await uploadServiceFile(order.id, file) : URL.createObjectURL(file);
       await updateOrder(order, { documents: [...(order.documents ?? []), { name: file.name, url }] }, `Anexo incluído: ${file.name}.`);
-    } catch { window.alert('Não foi possível enviar o anexo. Verifique as regras do Firebase Storage.'); }
+    } catch (error) {
+      const detail = error instanceof Error ? ` ${error.message}` : '';
+      window.alert(`Não foi possível enviar o anexo. Verifique o acesso ao Supabase Storage e tente novamente.${detail}`);
+    }
   }
   async function createQuote(orderId: string) {
     const record: Quote = { id: makeId('orc'), serviceOrderId: orderId, parts: 0, labor: 0, discount: 0, approved: false };
