@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, deleteDoc, doc, getFirestore, onSnapshot, setDoc } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { supabaseStorageEnabled, uploadServiceFileToSupabase } from './supabaseStorage';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? 'demo',
@@ -41,6 +42,7 @@ export async function removeRecord(path: string, id: string) {
 }
 
 export async function uploadServiceFile(serviceOrderId: string, file: File) {
+  if (supabaseStorageEnabled) return uploadServiceFileToSupabase(serviceOrderId, file);
   const fileRef = ref(storage, `service-orders/${serviceOrderId}/${file.name}`);
   await uploadBytes(fileRef, file);
   return getDownloadURL(fileRef);
