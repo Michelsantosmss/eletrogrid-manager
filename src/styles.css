@@ -79,7 +79,7 @@ progress::-webkit-progress-value { background: linear-gradient(90deg, #1373e6, #
 progress::-moz-progress-bar { background: linear-gradient(90deg, #1373e6, #26c6da); border-radius: 999px; }
 @media (max-width: 980px) { .customer-card { grid-template-columns: 1fr; } .asset-title { display: grid; } }
 .login-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top left, #d5f8ff, transparent 30%), #0d1b2f; }
-.login-card { width: min(440px, 100%); background: white; border-radius: 28px; padding: 32px; display: grid; gap: 14px; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
+.login-card { width: min(440px, 100%); background: #063b7a; color: white; border-radius: 28px; padding: 32px; display: grid; gap: 14px; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
 .login-card h1 { font-size: 2.4rem; margin: 0; }
 .login-card input, .crud-form input, .crud-form select { border: 1px solid #d7e2f0; border-radius: 14px; min-height: 46px; padding: 0 14px; width: 100%; }
 .form-error { color: #c0392b; font-size: .9rem; }
@@ -149,7 +149,11 @@ button:hover { background: #083b82; }
 .login-screen { background: radial-gradient(circle at 75% 15%, rgba(246,139,31,.2), transparent 25%), linear-gradient(135deg, #041634, #0b3475); }
 .login-card { border-radius: 10px; border-top: 4px solid #f68b1f; }
 .login-card .brand-mark { width: 116px; height: 78px; margin-bottom: 8px; background: #063b7a; }
-.login-card h1 { color: #0b285a; }
+.login-card h1 { color: white; }
+.login-card p { color: #d7e7ff; }
+.login-card > button[type="submit"] { background: #f68b1f; }
+.login-card > button[type="submit"]:hover { background: #dc7410; }
+.login-card .ghost-button { background: #dce9fb; color: #063b7a; }
 .crud-form input, .crud-form select, .filter-group select { border-radius: 7px; border-color: #d8e0eb; }
 .record-card { border-radius: 7px; border-color: #e1e7ef; }
 .record-card:hover { border-color: #aac4e6; box-shadow: 0 5px 14px rgba(17, 50, 96, .08); }
