@@ -12,7 +12,8 @@ export function useRealtimeCollection<T extends { id: string }>(
   useEffect(() => {
     if (!firebaseEnabled) return;
     return subscribeToCollection<T>(path, (next) => {
-      setItems(next.length ? next : initialValue);
+      // Once connected, Firestore is the source of truth: an empty collection is valid.
+      setItems(next);
       setConnected(true);
     }, () => setConnected(false));
   }, [path]); // `initialValue` is intentionally the initial demo fallback only.
