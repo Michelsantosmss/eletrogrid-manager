@@ -1,58 +1,36 @@
 # EletroGrid Manager
 
-Sistema web em português (Brasil) para assistência técnica da ELETROGRID, cobrindo eletrônicos, energia solar e serviços elétricos.
+Sistema de gestão para assistência técnica em eletrônicos, energia solar e serviços elétricos.
 
-## Funcionalidades
+## Recursos
 
-- Login e cadastro com Firebase Authentication, além de modo demonstração local.
-- Dashboard responsivo com menu lateral e indicadores operacionais.
-- Cadastro, pesquisa e exclusão de clientes e equipamentos.
-- Ordens de serviço com entrada, saída, status e histórico completo.
-- Orçamentos automáticos e conversão em contas a receber.
-- Financeiro com contas a receber, contas a pagar e fluxo de caixa.
-- Estrutura preparada para Cloud Firestore, Firebase Storage e Firebase Hosting.
+- Autenticação Firebase, com modo demonstração quando o Firebase não estiver configurado.
+- Dashboard operacional em tempo real, com indicadores de OS e financeiro.
+- CRUD de clientes e equipamentos, pesquisa global e filtros de status.
+- OS numerada automaticamente, histórico de alterações, anexos e QR code por equipamento.
+- Orçamentos, contas a receber e documentos imprimíveis de OS e orçamento.
+- Todos os documentos gerados usam o cabeçalho da EletroGrid.
 
-## Variáveis de ambiente
+## Configuração Firebase
 
-Crie um arquivo `.env` com as chaves do seu projeto Firebase:
+1. Crie um projeto no Firebase e habilite Authentication com e-mail/senha, Cloud Firestore e Storage.
+2. Copie `.env.example` para `.env`.
+3. Preencha as variáveis `VITE_FIREBASE_*` com a configuração do app Web no Firebase Console.
+4. Publique as regras e o Hosting:
 
 ```bash
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
+npm run build
+firebase deploy --only firestore:rules,storage,hosting
 ```
 
-## Desenvolvimento
+As regras versionadas exigem usuário autenticado para as coleções `clients`, `equipment`, `serviceOrders`, `quotes` e `finance`.
+
+## Desenvolvimento e qualidade
 
 ```bash
 npm ci
 npm run start
-```
-
-## Qualidade
-
-```bash
 npm run typecheck
 npm test
 npm run build
 ```
-
-## Deploy Firebase Hosting
-
-```bash
-npm run build
-firebase deploy
-```
-
-## Coleções Firestore
-
-- `clients`
-- `equipment`
-- `serviceOrders`
-- `quotes`
-- `finance`
-
-As regras de segurança exigem usuário autenticado para leitura e escrita.
