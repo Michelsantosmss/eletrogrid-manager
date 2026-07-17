@@ -5,15 +5,17 @@ import { printServiceNote } from './serviceNoteDocument';
 
 const write = vi.fn();
 const close = vi.fn();
+const open = vi.fn();
 
 afterEach(() => {
   write.mockReset();
   close.mockReset();
+  open.mockReset();
   vi.restoreAllMocks();
 });
 
 function mockPrintWindow() {
-  vi.spyOn(window, 'open').mockReturnValue({ document: { write, close } } as unknown as Window);
+  vi.spyOn(window, 'open').mockReturnValue({ document: { open, write, close } } as unknown as Window);
 }
 
 test('documento de OS inclui a marca EletroGrid e a etiqueta QR', () => {
