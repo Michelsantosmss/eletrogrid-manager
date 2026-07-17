@@ -6,9 +6,9 @@ export const clientsSeed: Client[] = [
   { id: 'cli-3', name: 'Indústria Aurora', document: '45.111.222/0001-33', phone: '(19) 3888-7070', email: 'energia@aurora.ind.br', city: 'Campinas' },
 ];
 export const equipmentSeed: Equipment[] = [
-  { id: 'eq-1', clientId: 'cli-1', category: 'Eletrônico', brand: 'APC', model: 'Nobreak Smart 3kVA', serial: 'APC-8844', notes: 'Falha intermitente em carga alta.' },
-  { id: 'eq-2', clientId: 'cli-2', category: 'Elétrico', brand: 'WEG', model: 'Quadro QGBT', serial: 'QGBT-221', notes: 'Inspeção termográfica preventiva.' },
-  { id: 'eq-3', clientId: 'cli-3', category: 'Energia solar', brand: 'Fronius', model: 'Inversor Primo', serial: 'FR-7781', notes: 'Baixa geração no string 2.' },
+  { id: 'eq-1', clientId: 'cli-1', category: 'Eletrônico', brand: 'APC', model: 'Nobreak Smart 3kVA', serial: 'APC-8844', color: 'Preto', voltage: '220 V', accessories: 'Cabo de alimentação', condition: 'Com riscos leves na tampa', notes: 'Falha intermitente em carga alta.' },
+  { id: 'eq-2', clientId: 'cli-2', category: 'Elétrico', brand: 'WEG', model: 'Quadro QGBT', serial: 'QGBT-221', accessories: 'Sem acessórios', condition: 'Painel íntegro', notes: 'Inspeção termográfica preventiva.' },
+  { id: 'eq-3', clientId: 'cli-3', category: 'Energia solar', brand: 'Fronius', model: 'Inversor Primo', serial: 'FR-7781', accessories: 'Conectores originais', condition: 'Sem avarias visíveis', notes: 'Baixa geração no string 2.' },
 ];
 export const orderSeed: ServiceOrder[] = [
   { id: 'os-1', clientId: 'cli-1', equipmentId: 'eq-1', status: 'Em análise', intakeDate: '2026-07-12', problem: 'Oscilação e desligamento automático.', diagnosis: 'Aguardando teste de baterias.', history: [{ at: '2026-07-12 09:00', status: 'Recebido', note: 'Equipamento recebido na bancada.' }, { at: '2026-07-12 14:20', status: 'Em análise', note: 'Técnico iniciou diagnóstico.' }] },

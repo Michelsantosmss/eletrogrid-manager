@@ -153,6 +153,10 @@ button:hover { background: #083b82; }
 .record-card { border-radius: 7px; border-color: #e1e7ef; }
 .record-card:hover { border-color: #aac4e6; box-shadow: 0 5px 14px rgba(17, 50, 96, .08); }
 .file-button { border-radius: 7px; color: #0c4ca3; }
+.intake-help { margin: -6px 0 0; color: #64748b; font-size: .9rem; }
+.equipment-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 980px) { .hero { grid-template-columns: 1fr; gap: 14px; } .hero .search-box { width: 100%; } }
+@media (max-width: 650px) { .hero { margin: 0 -20px 6px; padding: 16px 20px; } .hero h1 { font-size: 1.35rem; } .hero .search-box { grid-column: 1 / -1; } .equipment-form { grid-template-columns: 1fr; } }
 @media (max-width: 980px) { .app-shell { grid-template-columns: 1fr; } .sidebar { padding: 15px; } .hero { margin: 0 -20px 6px; padding: 16px 20px; } .content { padding: 0 20px 24px; } }
 .operations-dashboard { display: grid; gap: 16px; }
 .dashboard-title { display: flex; justify-content: space-between; align-items: end; }
