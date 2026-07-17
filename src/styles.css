@@ -111,7 +111,7 @@ body { background: #edf1f6; }
 .app-shell { grid-template-columns: 252px minmax(0, 1fr); background: #edf1f6; }
 .sidebar { background: linear-gradient(180deg, #071d43 0%, #041634 100%); padding: 22px 14px; gap: 24px; box-shadow: 8px 0 24px rgba(3, 20, 51, .12); }
 .brand { padding: 0 10px 16px; border-bottom: 1px solid rgba(255,255,255,.12); }
-.brand-mark { width: 64px; height: 48px; flex: 0 0 auto; overflow: hidden; display: block; border-radius: 6px; background: #08295d; }
+.brand-mark { width: 64px; height: 48px; flex: 0 0 auto; overflow: hidden; display: block; border-radius: 6px; background: #063b7a; }
 .brand-mark img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center 29%; transform: scale(1.12); }
 .brand strong { font-size: 1.07rem; letter-spacing: .03em; text-transform: uppercase; }
 .brand strong::first-letter { color: inherit; }
@@ -148,7 +148,7 @@ button:hover { background: #083b82; }
 .danger-button { background: #fff0ee; color: #b73c2c; }
 .login-screen { background: radial-gradient(circle at 75% 15%, rgba(246,139,31,.2), transparent 25%), linear-gradient(135deg, #041634, #0b3475); }
 .login-card { border-radius: 10px; border-top: 4px solid #f68b1f; }
-.login-card .brand-mark { width: 116px; height: 78px; margin-bottom: 8px; }
+.login-card .brand-mark { width: 116px; height: 78px; margin-bottom: 8px; background: #063b7a; }
 .login-card h1 { color: #0b285a; }
 .crud-form input, .crud-form select, .filter-group select { border-radius: 7px; border-color: #d8e0eb; }
 .record-card { border-radius: 7px; border-color: #e1e7ef; }
