@@ -61,3 +61,5 @@ jobs:
       - name: Deploy Hosting and Firestore rules
         if: ${{ env.FIREBASE_SERVICE_ACCOUNT != '' }}
         run: npx firebase-tools deploy --project eletrogrid-manager-v2 --only hosting,firestore:rules --non-interactive
+
+# Trigger restored production deployment
