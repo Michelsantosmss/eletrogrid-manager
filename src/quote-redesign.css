@@ -1,0 +1,146 @@
+.eg-quote-form {
+  --eg-navy: #071d43;
+  --eg-blue: #0b3d85;
+  --eg-orange: #f68b1f;
+  background: #fff;
+  border: 1px solid #d9e1eb;
+  border-left: 5px solid var(--eg-orange);
+  border-radius: 12px;
+  padding: 22px;
+  gap: 18px;
+  box-shadow: 0 10px 28px rgba(7, 29, 67, .08);
+}
+
+.eg-quote-form .quote-form-heading {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e6ebf2;
+}
+
+.eg-quote-form .quote-form-heading strong {
+  color: var(--eg-navy);
+  font-size: 1.35rem;
+}
+
+.eg-form-section-title {
+  margin: 4px 0 -2px;
+  color: var(--eg-blue);
+  font-size: 1rem;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.eg-quote-item-row {
+  display: grid;
+  grid-template-columns: minmax(240px, 2fr) minmax(145px, .9fr) minmax(90px, .45fr) minmax(145px, .75fr) auto;
+  gap: 9px 12px;
+  align-items: end;
+  padding: 14px 0;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.eg-field-label {
+  color: #102b58;
+  font-size: .78rem;
+  font-weight: 800;
+  align-self: end;
+}
+
+.eg-quote-item-row .eg-field-label:nth-of-type(1) { grid-column: 1; }
+.eg-quote-item-row .eg-field-label:nth-of-type(2) { grid-column: 2; }
+.eg-quote-item-row .eg-field-label:nth-of-type(3) { grid-column: 3; }
+.eg-quote-item-row .eg-field-label:nth-of-type(4) { grid-column: 4; }
+
+.eg-quote-item-row input[aria-label="Descrição do item"] { grid-column: 1; }
+.eg-quote-item-row select[aria-label="Tipo do item"] { grid-column: 2; }
+.eg-quote-item-row input[aria-label="Quantidade"] { grid-column: 3; }
+.eg-quote-item-row input[aria-label="Valor unitário"] { grid-column: 4; }
+.eg-quote-item-row .danger-button { grid-column: 5; grid-row: 2; }
+
+.eg-quote-form input,
+.eg-quote-form select,
+.eg-quote-form textarea {
+  min-height: 48px;
+  border-color: #cfd9e6;
+  background: #fff;
+}
+
+.eg-quote-form .eg-main-description {
+  min-height: 92px;
+  padding-top: 14px;
+  align-self: stretch;
+}
+
+.eg-quote-form .quote-conditions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px 14px;
+  align-items: end;
+}
+
+.eg-quote-form .quote-conditions .eg-field-label {
+  margin-bottom: -4px;
+}
+
+.eg-quote-form .quote-conditions textarea {
+  grid-column: 1 / -1;
+  min-height: 110px;
+}
+
+.eg-total-highlight {
+  justify-self: end;
+  min-width: 220px;
+  padding: 14px 18px;
+  border: 1px solid #ffd3a5;
+  border-radius: 10px;
+  background: #fff8f1;
+  color: var(--eg-orange) !important;
+  font-size: 1.55rem !important;
+  line-height: 1.2;
+}
+
+.eg-save-quote {
+  width: 100%;
+  justify-content: center;
+  min-height: 52px;
+  background: linear-gradient(90deg, #082e6c, #0b4ca1);
+  font-size: 1rem;
+}
+
+.eg-save-quote:hover { background: linear-gradient(90deg, #061f4b, #083b82); }
+
+.brand strong {
+  color: white;
+}
+
+.brand strong::after {
+  content: 'GRID';
+  color: #f68b1f;
+}
+
+.brand strong {
+  font-size: 0;
+}
+
+.brand strong::before {
+  content: 'ELETRO';
+  color: white;
+  font-size: 1.07rem;
+}
+
+.brand strong::after {
+  font-size: 1.07rem;
+}
+
+@media (max-width: 900px) {
+  .eg-quote-form { padding: 16px; }
+  .eg-quote-item-row,
+  .eg-quote-form .quote-conditions { grid-template-columns: 1fr; }
+  .eg-quote-item-row .eg-field-label,
+  .eg-quote-item-row input,
+  .eg-quote-item-row select,
+  .eg-quote-item-row .danger-button,
+  .eg-quote-form .quote-conditions textarea {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+  .eg-total-highlight { width: 100%; min-width: 0; text-align: right; }
+}
