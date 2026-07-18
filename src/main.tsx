@@ -11,7 +11,6 @@ import './mobile.css';
 import './intake.css';
 import './navigation-clarity.css';
 import './status-workflow.css';
-import './eletrogrid-app-theme.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
