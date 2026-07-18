@@ -4,11 +4,13 @@ import App from './App';
 import { installQuoteFormEnhancer } from './services/quoteFormEnhancer';
 import { installIntakeEnhancer } from './services/intakeEnhancer';
 import { installNavigationClarity } from './services/navigationClarity';
+import { installStatusWorkflowEnhancer } from './services/statusWorkflowEnhancer';
 import './styles.css';
 import './quote-redesign.css';
 import './mobile.css';
 import './intake.css';
 import './navigation-clarity.css';
+import './status-workflow.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -19,3 +21,4 @@ createRoot(document.getElementById('root')!).render(
 installQuoteFormEnhancer();
 installIntakeEnhancer();
 installNavigationClarity();
+installStatusWorkflowEnhancer();
