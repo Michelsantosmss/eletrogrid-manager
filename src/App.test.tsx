@@ -8,6 +8,7 @@ vi.mock('./services/firebase', async (importOriginal) => ({
 }));
 
 import App from './App';
+import { OperationsDashboard } from './components/OperationsDashboard';
 
 afterEach(cleanup);
 
@@ -111,4 +112,21 @@ test('oferece instalação de ar-condicionado split como categoria', () => {
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
   fireEvent.click(screen.getByRole('button', { name: 'Equipamentos' }));
   expect(screen.getByRole('option', { name: 'Instalação de ar-condicionado split' })).toBeInTheDocument();
+});
+
+test('dashboard usa somente as ordens e o faturamento recebidos da conta', () => {
+  render(<OperationsDashboard
+    clients={[]}
+    equipment={[]}
+    orders={[{ id: 'os-000004', clientId: 'cliente', equipmentId: 'equipamento', status: 'Entregue', intakeDate: '2026-07-18', problem: 'Serviço concluído', diagnosis: '', history: [] }]}
+    finance={[{ id: 'fin-120', type: 'Receber', description: 'Serviço OS-000004', amount: 120, dueDate: '2026-07-18', paid: false }]}
+    demo={false}
+  />);
+
+  expect(screen.getByText('1 ordens registradas')).toBeInTheDocument();
+  expect(screen.getAllByText('Em diagnóstico')[0].closest('article')).toHaveTextContent('00');
+  expect(screen.getAllByText('Aguardando peças')[0].closest('article')).toHaveTextContent('00');
+  expect(screen.getAllByText('Prontos para entrega')[0].closest('article')).toHaveTextContent('01');
+  expect(screen.getByText('Ordens abertas').closest('article')).toHaveTextContent('00');
+  expect(screen.getAllByText('R$ 120,00')).toHaveLength(2);
 });
