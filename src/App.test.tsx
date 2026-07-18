@@ -57,3 +57,30 @@ test('atualiza o total do orçamento ao informar o valor unitário', () => {
 
   expect(screen.getByText((content) => content.includes('TOTAL:') && content.includes('150,00'))).toBeInTheDocument();
 });
+
+test('vincula cliente e equipamento novos ao criar uma OS', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Clientes' }));
+  fireEvent.change(screen.getByPlaceholderText('Nome'), { target: { value: 'Cliente Novo' } });
+  fireEvent.change(screen.getByPlaceholderText('Telefone'), { target: { value: '11999999999' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar cliente' }));
+
+  fireEvent.click(screen.getByRole('button', { name: 'Equipamentos' }));
+  const equipmentClient = screen.getByLabelText('Cliente do equipamento');
+  const newClientOption = screen.getByRole('option', { name: 'Cliente Novo' }) as HTMLOptionElement;
+  fireEvent.change(equipmentClient, { target: { value: newClientOption.value } });
+  fireEvent.change(screen.getByPlaceholderText('Marca'), { target: { value: 'Marca Nova' } });
+  fireEvent.change(screen.getByPlaceholderText('Modelo'), { target: { value: 'Modelo Novo' } });
+  fireEvent.change(screen.getByPlaceholderText('Número de série / IMEI'), { target: { value: 'SERIE-NOVA' } });
+  fireEvent.change(screen.getByPlaceholderText('Estado na entrada'), { target: { value: 'Bom estado' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar equipamento' }));
+
+  fireEvent.click(screen.getByRole('button', { name: /Ordens de serviço/i }));
+  const orderClient = screen.getByLabelText('Cliente da nova OS');
+  fireEvent.change(orderClient, { target: { value: newClientOption.value } });
+  expect(screen.getByRole('option', { name: 'Marca Nova Modelo Novo' })).toBeInTheDocument();
+  fireEvent.change(screen.getByPlaceholderText('Problema relatado'), { target: { value: 'Teste do vínculo' } });
+  fireEvent.click(screen.getByRole('button', { name: /Gerar OS automaticamente/i }));
+  expect(screen.getByText('Teste do vínculo')).toBeInTheDocument();
+});
