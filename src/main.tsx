@@ -4,6 +4,7 @@ import App from './App';
 import { installQuoteFormEnhancer } from './services/quoteFormEnhancer';
 import './styles.css';
 import './quote-redesign.css';
+import './mobile.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
