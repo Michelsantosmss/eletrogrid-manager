@@ -3,7 +3,7 @@ import { addFooter, addSection, createPdf, downloadPdf } from './pdfDocument';
 
 export async function printServiceNote(order: ServiceOrder, client?: Client, equipment?: Equipment) {
   const { pdf, y: startY } = await createPdf('NOTA DE SERVIÇO', order.id.toUpperCase());
-  let y = addSection(pdf, startY, 'Cliente', `${client?.name ?? 'Não identificado'}\nTelefone: ${client?.phone ?? '-'}\nCidade: ${client?.city ?? '-'}`);
+  let y = addSection(pdf, startY, 'Cliente', `${client?.name ?? 'Não identificado'}\nCPF/CNPJ: ${client?.document ?? '-'}\nTelefone: ${client?.phone ?? '-'}\nE-mail: ${client?.email ?? '-'}\nCidade: ${client?.city ?? '-'}`);
   y = addSection(pdf, y, 'Equipamento', `${equipment ? `${equipment.brand} ${equipment.model}` : 'Não identificado'}\nSérie/IMEI: ${equipment?.serial ?? '-'}`);
   y = addSection(pdf, y, 'Defeito relatado', order.problem);
   y = addSection(pdf, y, 'Diagnóstico técnico', order.diagnosis || '-');
