@@ -16,6 +16,7 @@ jobs:
       contents: read
 
     env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
       VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
       VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
@@ -47,10 +48,16 @@ jobs:
       - name: Build production app
         run: npm run build
 
+      - name: Explain missing deployment credential
+        if: ${{ env.FIREBASE_SERVICE_ACCOUNT == '' }}
+        run: echo "Validation and build passed. Add the FIREBASE_SERVICE_ACCOUNT repository secret to activate automatic deployment."
+
       - name: Authenticate with Google Cloud
+        if: ${{ env.FIREBASE_SERVICE_ACCOUNT != '' }}
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Deploy Hosting and Firestore rules
+        if: ${{ env.FIREBASE_SERVICE_ACCOUNT != '' }}
         run: npx firebase-tools deploy --project eletrogrid-manager-v2 --only hosting,firestore:rules --non-interactive
