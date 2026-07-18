@@ -83,6 +83,8 @@ progress::-moz-progress-bar { background: linear-gradient(90deg, #1373e6, #26c6d
 .login-card h1 { font-size: 2.4rem; margin: 0; }
 .login-card input, .crud-form input, .crud-form select { border: 1px solid #d7e2f0; border-radius: 14px; min-height: 46px; padding: 0 14px; width: 100%; }
 .form-error { color: #c0392b; font-size: .9rem; }
+.form-success { color: #a8f0c6; font-size: .9rem; }
+.password-reset-button { background: transparent; color: #d7e7ff; justify-content: center; padding: 4px 10px; min-height: 32px; text-decoration: underline; }
 .link-button { background: transparent; color: #1373e6; justify-content: center; }
 .nav-button { background: transparent; color: #cbd7ea; justify-content: flex-start; }
 .nav-button.active, .nav-button:hover { background: rgba(255,255,255,.12); color: white; }

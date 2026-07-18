@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'firebase/auth';
 import { collection, deleteDoc, doc, getFirestore, onSnapshot, setDoc } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { supabaseStorageEnabled, uploadServiceFileToSupabase } from './supabaseStorage';
@@ -27,6 +27,10 @@ export async function loginWithEmail(email: string, password: string) {
 
 export async function registerWithEmail(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password);
+}
+
+export async function resetPassword(email: string) {
+  return sendPasswordResetEmail(auth, email);
 }
 
 export async function logout() {

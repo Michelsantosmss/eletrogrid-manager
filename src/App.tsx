@@ -8,7 +8,7 @@ import { QuoteDocumentButton } from './components/QuoteDocumentButton';
 import { OrderDocumentButton } from './components/OrderDocumentButton';
 import { ServiceNoteButton } from './components/ServiceNoteButton';
 import { useRealtimeCollection } from './hooks/useRealtimeCollection';
-import { auth, firebaseEnabled, loginWithEmail, logout, registerWithEmail, removeRecord, saveRecord, uploadServiceFile } from './services/firebase';
+import { auth, firebaseEnabled, loginWithEmail, logout, registerWithEmail, removeRecord, resetPassword, saveRecord, uploadServiceFile } from './services/firebase';
 import { clientsSeed, equipmentSeed, financeSeed, orderSeed, quoteSeed } from './services/seedData';
 import { Client, Equipment, FinanceEntry, Quote, ServiceOrder, ServiceStatus } from './types';
 import { quoteItems, quoteSubtotal, quoteTotal } from './services/quoteDocument';
@@ -46,6 +46,7 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authMessage, setAuthMessage] = useState('');
   const [demo, setDemo] = useState(false);
   const [userReady, setUserReady] = useState(!firebaseEnabled);
   const [authenticated, setAuthenticated] = useState(false);
@@ -93,11 +94,27 @@ function App() {
   async function handleAuth(event: FormEvent, mode: 'login' | 'register') {
     event.preventDefault();
     setAuthError('');
+    setAuthMessage('');
     if (!firebaseEnabled) { setAuthError('Configure as variáveis VITE_FIREBASE_* para usar a autenticação.'); return; }
     try {
       if (mode === 'login') await loginWithEmail(email, password);
       else await registerWithEmail(email, password);
     } catch { setAuthError('Não foi possível autenticar. Confira o e-mail, senha e a configuração Firebase.'); }
+  }
+
+  async function handlePasswordReset() {
+    setAuthError('');
+    setAuthMessage('');
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) { setAuthError('Digite seu e-mail para redefinir a senha.'); return; }
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) { setAuthError('Digite um e-mail válido.'); return; }
+    if (!firebaseEnabled) { setAuthError('A recuperação de senha não está disponível no modo demonstração.'); return; }
+    try {
+      await resetPassword(normalizedEmail);
+      setAuthMessage('Enviamos o link de redefinição. Verifique sua caixa de entrada e a pasta de spam.');
+    } catch {
+      setAuthError('Não foi possível enviar o e-mail de redefinição. Tente novamente em alguns minutos.');
+    }
   }
 
   async function persist<T extends { id: string }>(path: string, record: T) { if (firebaseEnabled && !demo) await saveRecord(path, record); }
@@ -159,7 +176,7 @@ function App() {
   }
 
   if (!userReady) return <main className="login-screen">Carregando sessão…</main>;
-  if (!isAuthenticated) return <main className="login-screen"><form className="login-card" onSubmit={(event) => handleAuth(event, 'login')}><EletroGridMark/><h1>EletroGrid Manager</h1><p>Acesse a operação técnica com sua conta Firebase.</p><input aria-label="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="E-mail" required/><input aria-label="Senha" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Senha" minLength={6} required/>{authError && <strong className="form-error">{authError}</strong>}<button type="submit">Entrar</button><button className="ghost-button" onClick={(e) => handleAuth(e, 'register')} type="button">Criar acesso</button><button className="link-button" onClick={() => setDemo(true)} type="button">Abrir modo demonstração</button></form></main>;
+  if (!isAuthenticated) return <main className="login-screen"><form className="login-card" onSubmit={(event) => handleAuth(event, 'login')}><EletroGridMark/><h1>EletroGrid Manager</h1><p>Acesse a operação técnica com sua conta Firebase.</p><input aria-label="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="E-mail" required/><input aria-label="Senha" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Senha" minLength={6} required/>{authError && <strong className="form-error" role="alert">{authError}</strong>}{authMessage && <strong className="form-success" role="status">{authMessage}</strong>}<button type="submit">Entrar</button><button className="ghost-button" onClick={(e) => handleAuth(e, 'register')} type="button">Criar acesso</button><button className="password-reset-button" onClick={() => void handlePasswordReset()} type="button">Esqueci minha senha</button><button className="link-button" onClick={() => setDemo(true)} type="button">Abrir modo demonstração</button></form></main>;
 
   return <main className="app-shell">
     <aside className="sidebar"><div className="brand"><EletroGridMark/><div><strong>EletroGrid</strong><small>Manager</small></div></div><nav>{modules.map((module) => <button className={`nav-button ${activeModule === module ? 'active' : ''}`} key={module} onClick={() => setActiveModule(module)} type="button">{module}</button>)}</nav><button className="logout-button" onClick={() => { setDemo(false); void logout(); }} type="button"><LogOut size={18}/>Sair</button></aside>

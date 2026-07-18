@@ -15,6 +15,13 @@ test('exibe a tela de acesso', () => {
   render(<App />);
   expect(screen.getByText('EletroGrid Manager')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /modo demonstra/i })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Esqueci minha senha/i })).toBeInTheDocument();
+});
+
+test('solicita o e-mail antes de recuperar a senha', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /Esqueci minha senha/i }));
+  expect(screen.getByRole('alert')).toHaveTextContent('Digite seu e-mail');
 });
 
 test('permite navegar e pesquisar clientes no modo demonstracao', () => {
