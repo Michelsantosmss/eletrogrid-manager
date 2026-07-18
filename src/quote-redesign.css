@@ -97,6 +97,14 @@
   line-height: 1.2;
 }
 
+.quote-summary {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  color: #607086;
+  font-size: .9rem;
+}
+
 .eg-save-quote {
   width: 100%;
   justify-content: center;

@@ -61,7 +61,6 @@ function enhanceQuoteForm(form: HTMLFormElement) {
 
   if (total) {
     total.classList.add('eg-total-highlight');
-    total.textContent = total.textContent?.replace('Total:', 'TOTAL') ?? 'TOTAL';
   }
 
   const saveButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');

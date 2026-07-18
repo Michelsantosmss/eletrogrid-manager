@@ -39,3 +39,14 @@ test('cria uma OS numerada e vincula uma etiqueta QR ao equipamento', () => {
   expect(screen.getByText('OS-000003 · Recebido')).toBeInTheDocument();
   expect(screen.getByText('Etiqueta QR do equipamento')).toBeInTheDocument();
 });
+
+test('atualiza o total do orçamento ao informar o valor unitário', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Ordens de servi/i }));
+  fireEvent.click(screen.getAllByRole('button', { name: /Criar orçamento/i })[0]);
+
+  fireEvent.change(screen.getByLabelText('Valor unitário'), { target: { value: '150' } });
+
+  expect(screen.getByText((content) => content.includes('TOTAL:') && content.includes('150,00'))).toBeInTheDocument();
+});

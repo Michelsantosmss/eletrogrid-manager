@@ -8,7 +8,8 @@ export const quoteItems = (quote: Quote) => quote.items?.length ? quote.items : 
   { id: 'legacy-labor', description: 'Mão de obra', kind: 'Serviço' as const, quantity: 1, unitPrice: quote.labor ?? 0 },
 ].filter((item) => item.unitPrice > 0);
 
-export const quoteTotal = (quote: Quote) => quoteItems(quote).reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) - quote.discount;
+export const quoteSubtotal = (quote: Quote) => quoteItems(quote).reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+export const quoteTotal = (quote: Quote) => quoteSubtotal(quote) - quote.discount;
 
 export async function printQuote(quote: Quote, order?: ServiceOrder, client?: Client, equipment?: Equipment) {
   const { pdf, y: startY } = await createPdf('ORÇAMENTO', `${quote.id.toUpperCase()} - ${quote.serviceOrderId.toUpperCase()}`);
