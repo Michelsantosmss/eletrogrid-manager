@@ -58,6 +58,23 @@ test('atualiza o total do orçamento ao informar o valor unitário', () => {
   expect(screen.getByText((content) => content.includes('TOTAL:') && content.includes('150,00'))).toBeInTheDocument();
 });
 
+test('leva o total do orçamento para a nota e permite alterar o valor', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Ordens de serviço/i }));
+  fireEvent.click(screen.getAllByRole('button', { name: /Criar orçamento/i })[0]);
+  fireEvent.change(screen.getByLabelText('Descrição do item'), { target: { value: 'Serviço realizado' } });
+  fireEvent.change(screen.getByLabelText('Valor unitário'), { target: { value: '150' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar orçamento' }));
+
+  fireEvent.click(screen.getByRole('button', { name: /Ordens de serviço/i }));
+  const valueInput = screen.getAllByLabelText(/Valor do serviço/i)[0] as HTMLInputElement;
+  expect(valueInput).toHaveValue(150);
+  fireEvent.change(valueInput, { target: { value: '200' } });
+  expect(valueInput).toHaveValue(200);
+  expect(screen.getAllByRole('button', { name: /Baixar nota PDF/i })[0]).toBeEnabled();
+});
+
 test('vincula cliente e equipamento novos ao criar uma OS', () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));

@@ -37,9 +37,14 @@ test('gera o PDF do orçamento com itens e total', async () => {
   expect(downloadPdf).toHaveBeenCalledWith(fakePdf, 'orcamento-orc-000001.pdf');
 });
 
-test('gera o PDF da nota de serviço com execução e garantia', async () => {
-  await printServiceNote({ id: 'os-000003', clientId: 'cli-1', equipmentId: 'eq-1', status: 'Finalizado', intakeDate: '2026-07-17', problem: 'Falha', diagnosis: 'Componente danificado', servicePerformed: 'Substituição do componente e testes', warranty: '90 dias', history: [] }, { id: 'cli-1', name: 'Cliente Teste', document: '123', phone: '11999999999', email: 'cliente@teste.com', city: 'São Paulo' });
+test('gera o PDF da nota de serviço com execução, garantia e valor obrigatório', async () => {
+  await printServiceNote({ id: 'os-000003', clientId: 'cli-1', equipmentId: 'eq-1', status: 'Finalizado', intakeDate: '2026-07-17', problem: 'Falha', diagnosis: 'Componente danificado', servicePerformed: 'Substituição do componente e testes', serviceValue: 250, warranty: '90 dias', history: [] }, { id: 'cli-1', name: 'Cliente Teste', document: '123', phone: '11999999999', email: 'cliente@teste.com', city: 'São Paulo' });
   expect(addSection.mock.calls.flat().join(' ')).toContain('Substituição do componente e testes');
   expect(addSection.mock.calls.flat().join(' ')).toContain('Cliente Teste');
+  expect(addSection.mock.calls.flat().join(' ')).toContain('R$ 250,00');
   expect(downloadPdf).toHaveBeenCalledWith(fakePdf, 'nota-de-servico-os-000003.pdf');
+});
+
+test('impede gerar a nota de serviço sem valor', async () => {
+  await expect(printServiceNote({ id: 'os-000004', clientId: 'cli-1', equipmentId: 'eq-1', status: 'Finalizado', intakeDate: '2026-07-17', problem: 'Falha', diagnosis: '', history: [] })).rejects.toThrow('Informe o valor do serviço');
 });

@@ -2,12 +2,14 @@ import { Client, Equipment, ServiceOrder } from '../types';
 import { addFooter, addSection, createPdf, downloadPdf } from './pdfDocument';
 
 export async function printServiceNote(order: ServiceOrder, client?: Client, equipment?: Equipment) {
+  if (!order.serviceValue || order.serviceValue <= 0) throw new Error('Informe o valor do serviço antes de gerar a nota.');
   const { pdf, y: startY } = await createPdf('NOTA DE SERVIÇO', order.id.toUpperCase());
   let y = addSection(pdf, startY, 'Cliente', `${client?.name ?? 'Não identificado'}\nCPF/CNPJ: ${client?.document ?? '-'}\nTelefone: ${client?.phone ?? '-'}\nE-mail: ${client?.email ?? '-'}\nCidade: ${client?.city ?? '-'}`);
   y = addSection(pdf, y, 'Equipamento', `${equipment ? `${equipment.brand} ${equipment.model}` : 'Não identificado'}\nSérie/IMEI: ${equipment?.serial ?? '-'}`);
   y = addSection(pdf, y, 'Defeito relatado', order.problem);
   y = addSection(pdf, y, 'Diagnóstico técnico', order.diagnosis || '-');
   y = addSection(pdf, y, 'Serviços executados', order.servicePerformed || 'Aguardando registro dos serviços executados.');
+  y = addSection(pdf, y, 'Valor do serviço', new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.serviceValue));
   y = addSection(pdf, y, 'Garantia', order.warranty || '-');
   y = addSection(pdf, y, 'Observações técnicas', order.technicianNotes || '-');
   y = addSection(pdf, y, 'Conclusão', `Status: ${order.status}\nEntrada: ${order.intakeDate}\nSaída: ${order.exitDate || '-'}`);

@@ -193,7 +193,8 @@ button:hover { background: #083b82; }
 .order-summary-line { display: grid; grid-template-columns: 1fr 180px; gap: 16px; align-items: start; }
 .order-summary-line > div { display: grid; gap: 7px; }
 .order-summary-line select, .service-details input, .service-details textarea, .quote-form input, .quote-form select, .quote-form textarea { border: 1px solid #d8e0eb; border-radius: 7px; padding: 10px 12px; background: white; color: #172033; font: inherit; }
-.service-details { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 10px; }
+.service-details { display: grid; grid-template-columns: 2fr 1fr 1.2fr 2fr; gap: 10px; }
+.service-value-field { display: grid; gap: 5px; color: #0b3d85; font-size: .82rem; font-weight: 800; }
 .service-details textarea, .quote-form textarea { min-height: 78px; resize: vertical; }
 .quote-form { display: grid; gap: 12px; padding: 18px; border: 1px solid #cbd9eb; border-left: 4px solid #f68b1f; border-radius: 8px; background: #f8fbff; }
 .quote-form-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
