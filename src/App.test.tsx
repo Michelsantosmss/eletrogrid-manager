@@ -27,6 +27,7 @@ test('solicita o e-mail antes de recuperar a senha', () => {
 test('permite navegar e pesquisar clientes no modo demonstracao', () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  expect(screen.getByText('Modo demonstração')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Clientes' }));
 
   expect(screen.getByText(/Hospital S/i)).toBeInTheDocument();
