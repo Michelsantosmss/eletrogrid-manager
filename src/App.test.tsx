@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
 vi.mock('./services/firebase', async (importOriginal) => ({
@@ -36,14 +36,14 @@ test('permite navegar e pesquisar clientes no modo demonstracao', () => {
   expect(screen.queryByText(/Hospital S/i)).not.toBeInTheDocument();
 });
 
-test('cria uma OS numerada e vincula uma etiqueta QR ao equipamento', () => {
+test('cria uma OS numerada e vincula uma etiqueta QR ao equipamento', async () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
   fireEvent.click(screen.getByRole('button', { name: /Ordens de servi/i }));
   fireEvent.change(screen.getByPlaceholderText('Problema relatado'), { target: { value: 'Teste da etiqueta QR' } });
   fireEvent.click(screen.getByRole('button', { name: /Gerar OS automaticamente/i }));
 
-  expect(screen.getByText('OS-000003 · Recebido')).toBeInTheDocument();
+  expect(await screen.findByText('OS-000003 · Recebido')).toBeInTheDocument();
   expect(screen.getByText('Etiqueta QR do equipamento')).toBeInTheDocument();
 });
 
@@ -58,7 +58,7 @@ test('atualiza o total do orçamento ao informar o valor unitário', () => {
   expect(screen.getByText((content) => content.includes('TOTAL:') && content.includes('150,00'))).toBeInTheDocument();
 });
 
-test('leva o total do orçamento para a nota e permite alterar o valor', () => {
+test('leva o total do orçamento para a nota e permite alterar o valor', async () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
   fireEvent.click(screen.getByRole('button', { name: /Ordens de serviço/i }));
@@ -66,6 +66,7 @@ test('leva o total do orçamento para a nota e permite alterar o valor', () => {
   fireEvent.change(screen.getByLabelText('Descrição do item'), { target: { value: 'Serviço realizado' } });
   fireEvent.change(screen.getByLabelText('Valor unitário'), { target: { value: '150' } });
   fireEvent.click(screen.getByRole('button', { name: 'Salvar orçamento' }));
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Salvar orçamento' })).not.toBeInTheDocument());
 
   fireEvent.click(screen.getByRole('button', { name: /Ordens de serviço/i }));
   const valueInput = screen.getAllByLabelText(/Valor do serviço/i)[0] as HTMLInputElement;
@@ -75,13 +76,14 @@ test('leva o total do orçamento para a nota e permite alterar o valor', () => {
   expect(screen.getAllByRole('button', { name: /Baixar nota PDF/i })[0]).toBeEnabled();
 });
 
-test('vincula cliente e equipamento novos ao criar uma OS', () => {
+test('vincula cliente e equipamento novos ao criar uma OS', async () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
   fireEvent.click(screen.getByRole('button', { name: 'Clientes' }));
   fireEvent.change(screen.getByPlaceholderText('Nome'), { target: { value: 'Cliente Novo' } });
   fireEvent.change(screen.getByPlaceholderText('Telefone'), { target: { value: '11999999999' } });
   fireEvent.click(screen.getByRole('button', { name: 'Salvar cliente' }));
+  await screen.findByText('Cliente Novo');
 
   fireEvent.click(screen.getByRole('button', { name: 'Equipamentos' }));
   const equipmentClient = screen.getByLabelText('Cliente do equipamento');
@@ -92,6 +94,7 @@ test('vincula cliente e equipamento novos ao criar uma OS', () => {
   fireEvent.change(screen.getByPlaceholderText('Número de série / IMEI'), { target: { value: 'SERIE-NOVA' } });
   fireEvent.change(screen.getByPlaceholderText('Estado na entrada'), { target: { value: 'Bom estado' } });
   fireEvent.click(screen.getByRole('button', { name: 'Salvar equipamento' }));
+  await screen.findByText('Marca Nova Modelo Novo');
 
   fireEvent.click(screen.getByRole('button', { name: /Ordens de serviço/i }));
   const orderClient = screen.getByLabelText('Cliente da nova OS');
@@ -99,7 +102,7 @@ test('vincula cliente e equipamento novos ao criar uma OS', () => {
   expect(screen.getByRole('option', { name: 'Marca Nova Modelo Novo' })).toBeInTheDocument();
   fireEvent.change(screen.getByPlaceholderText('Problema relatado'), { target: { value: 'Teste do vínculo' } });
   fireEvent.click(screen.getByRole('button', { name: /Gerar OS automaticamente/i }));
-  expect(screen.getByText('Teste do vínculo')).toBeInTheDocument();
+  expect(await screen.findByText('Teste do vínculo')).toBeInTheDocument();
 });
 
 test('oferece instalação de ar-condicionado split como categoria', () => {

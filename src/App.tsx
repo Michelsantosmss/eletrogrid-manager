@@ -59,14 +59,16 @@ function App() {
   const [demo, setDemo] = useState(false);
   const [userReady, setUserReady] = useState(!firebaseEnabled);
   const [authenticated, setAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [activeModule, setActiveModule] = useState<Module>('Dashboard');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'Todas' | ServiceStatus>('Todas');
-  const [clients, setClients, clientsLive] = useRealtimeCollection<Client>('clients', clientsSeed);
-  const [equipment, setEquipment, equipmentLive] = useRealtimeCollection<Equipment>('equipment', equipmentSeed);
-  const [orders, setOrders, ordersLive] = useRealtimeCollection<ServiceOrder>('serviceOrders', orderSeed);
-  const [quotes, setQuotes] = useRealtimeCollection<Quote>('quotes', quoteSeed);
-  const [finance, setFinance] = useRealtimeCollection<FinanceEntry>('finance', financeSeed);
+  const cloudEnabled = Boolean(userId) && !demo;
+  const [clients, setClients, clientsLive] = useRealtimeCollection<Client>('clients', clientsSeed, cloudEnabled);
+  const [equipment, setEquipment, equipmentLive] = useRealtimeCollection<Equipment>('equipment', equipmentSeed, cloudEnabled);
+  const [orders, setOrders, ordersLive] = useRealtimeCollection<ServiceOrder>('serviceOrders', orderSeed, cloudEnabled);
+  const [quotes, setQuotes] = useRealtimeCollection<Quote>('quotes', quoteSeed, cloudEnabled);
+  const [finance, setFinance] = useRealtimeCollection<FinanceEntry>('finance', financeSeed, cloudEnabled);
   const [clientForm, setClientForm] = useState(emptyClient);
   const [editingClient, setEditingClient] = useState<string | null>(null);
   const [equipmentForm, setEquipmentForm] = useState<Omit<Equipment, 'id'>>({ clientId: 'cli-1', category: 'Eletrônico', brand: '', model: '', serial: '', color: '', voltage: '', accessories: '', condition: '', notes: '' });
@@ -78,6 +80,7 @@ function App() {
     if (!firebaseEnabled) return;
     return onAuthStateChanged(auth, (user) => {
       setAuthenticated(Boolean(user));
+      setUserId(user?.uid ?? null);
       setUserReady(true);
     });
   }, []);
@@ -126,27 +129,36 @@ function App() {
     }
   }
 
-  async function persist<T extends { id: string }>(path: string, record: T) { if (firebaseEnabled && !demo) await saveRecord(path, record); }
-  async function destroy(path: string, id: string) { if (firebaseEnabled && !demo) await removeRecord(path, id); }
+  async function persist<T extends { id: string }>(path: string, record: T) {
+    if (demo) return;
+    if (!cloudEnabled) throw new Error('Aguarde a conexão com a nuvem e tente novamente.');
+    await saveRecord(path, record);
+  }
+  async function destroy(path: string, id: string) {
+    if (demo) return;
+    if (!cloudEnabled) throw new Error('Aguarde a conexão com a nuvem e tente novamente.');
+    await removeRecord(path, id);
+  }
+  const cloudError = () => window.alert('Não foi possível salvar na nuvem. Verifique a internet, aguarde a sincronização e tente novamente.');
 
   async function submitClient(event: FormEvent) {
     event.preventDefault();
     const record: Client = { id: editingClient ?? makeId('cli'), ...clientForm };
+    try { await persist('clients', record); } catch { cloudError(); return; }
     setClients((items) => editingClient ? items.map((item) => item.id === record.id ? record : item) : [record, ...items]);
-    await persist('clients', record);
     setClientForm(emptyClient); setEditingClient(null);
   }
-  async function deleteClient(id: string) { setClients((items) => items.filter((item) => item.id !== id)); await destroy('clients', id); }
+  async function deleteClient(id: string) { try { await destroy('clients', id); setClients((items) => items.filter((item) => item.id !== id)); } catch { cloudError(); } }
   async function submitEquipment(event: FormEvent) {
     event.preventDefault();
     const clientId = clients.some((client) => client.id === equipmentForm.clientId) ? equipmentForm.clientId : (clients[0]?.id ?? '');
     if (!clientId) return;
     const record: Equipment = { id: editingEquipment ?? makeId('eq'), ...equipmentForm, clientId };
+    try { await persist('equipment', record); } catch { cloudError(); return; }
     setEquipment((items) => editingEquipment ? items.map((item) => item.id === record.id ? record : item) : [record, ...items]);
-    await persist('equipment', record);
     setEquipmentForm({ clientId: clients[0]?.id ?? '', category: 'Eletrônico', brand: '', model: '', serial: '', color: '', voltage: '', accessories: '', condition: '', notes: '' }); setEditingEquipment(null);
   }
-  async function deleteEquipment(id: string) { setEquipment((items) => items.filter((item) => item.id !== id)); await destroy('equipment', id); }
+  async function deleteEquipment(id: string) { try { await destroy('equipment', id); setEquipment((items) => items.filter((item) => item.id !== id)); } catch { cloudError(); } }
   async function submitOrder(event: FormEvent) {
     event.preventDefault();
     const selectedEquipment = equipmentForClient(orderForm.clientId, clients, equipment).find((item) => item.id === orderForm.equipmentId);
@@ -154,12 +166,14 @@ function App() {
     const id = nextOrderId(orders);
     const qrCode = equipmentQr(id, selectedEquipment.id);
     const record: ServiceOrder = { id, ...orderForm, equipmentId: selectedEquipment.id, qrCode, status: 'Recebido', intakeDate: today(), history: [{ at: new Date().toLocaleString('pt-BR'), status: 'Recebido', note: `Entrada registrada. Etiqueta QR criada: ${qrCode.value}.` }], documents: [{ name: 'Etiqueta QR do equipamento', url: qrCode.url }] };
-    setOrders((items) => [record, ...items]); await persist('serviceOrders', record);
+    try { await persist('serviceOrders', record); } catch { cloudError(); return; }
+    setOrders((items) => [record, ...items]);
     setOrderForm({ clientId: clients[0]?.id ?? '', equipmentId: equipment[0]?.id ?? '', problem: '', diagnosis: '' });
   }
   async function updateOrder(order: ServiceOrder, changes: Partial<ServiceOrder>, note?: string) {
     const record = { ...order, ...changes, history: note ? [...order.history, { at: new Date().toLocaleString('pt-BR'), status: changes.status ?? order.status, note }] : order.history };
-    setOrders((items) => items.map((item) => item.id === record.id ? record : item)); await persist('serviceOrders', record);
+    setOrders((items) => items.map((item) => item.id === record.id ? record : item));
+    try { await persist('serviceOrders', record); } catch { setOrders((items) => items.map((item) => item.id === order.id ? order : item)); cloudError(); }
   }
   async function attachFile(order: ServiceOrder, file: File) {
     try {
@@ -179,15 +193,16 @@ function App() {
     event.preventDefault();
     if (!quoteDraft) return;
     const exists = quotes.some((quote) => quote.id === quoteDraft.id);
+    try { await persist('quotes', quoteDraft); } catch { cloudError(); return; }
     setQuotes((items) => exists ? items.map((quote) => quote.id === quoteDraft.id ? quoteDraft : quote) : [quoteDraft, ...items]);
-    await persist('quotes', quoteDraft);
     const linkedOrder = orders.find((order) => order.id === quoteDraft.serviceOrderId);
     if (linkedOrder) await updateOrder(linkedOrder, { serviceValue: quoteTotal(quoteDraft) }, `Valor do serviço atualizado pelo orçamento ${quoteDraft.id.toUpperCase()}.`);
     setQuoteDraft(null);
   }
   async function approveQuote(quote: Quote) {
     const approved = { ...quote, approved: true }; const entry: FinanceEntry = { id: makeId('fin'), type: 'Receber', description: `Orçamento ${quote.id.toUpperCase()}`, amount: quoteTotal(quote), dueDate: today(), paid: false };
-    setQuotes((items) => items.map((item) => item.id === quote.id ? approved : item)); setFinance((items) => [entry, ...items]); await Promise.all([persist('quotes', approved), persist('finance', entry)]);
+    try { await Promise.all([persist('quotes', approved), persist('finance', entry)]); } catch { cloudError(); return; }
+    setQuotes((items) => items.map((item) => item.id === quote.id ? approved : item)); setFinance((items) => [entry, ...items]);
   }
 
   if (!userReady) return <main className="login-screen">Carregando sessão…</main>;

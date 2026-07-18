@@ -5,18 +5,24 @@ import { firebaseEnabled, subscribeToCollection } from '../services/firebase';
 export function useRealtimeCollection<T extends { id: string }>(
   path: string,
   initialValue: T[],
+  cloudEnabled = false,
 ): [T[], Dispatch<SetStateAction<T[]>>, boolean] {
   const [items, setItems] = useState<T[]>(initialValue);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    if (!firebaseEnabled) return;
+    if (!firebaseEnabled || !cloudEnabled) {
+      setItems(initialValue);
+      setConnected(false);
+      return;
+    }
+    setItems([]);
+    setConnected(false);
     return subscribeToCollection<T>(path, (next) => {
-      // Once connected, Firestore is the source of truth: an empty collection is valid.
       setItems(next);
       setConnected(true);
     }, () => setConnected(false));
-  }, [path]); // `initialValue` is intentionally the initial demo fallback only.
+  }, [cloudEnabled, path]); // initialValue is intentionally stable seed data for demo mode.
 
   return [items, setItems, connected];
 }
