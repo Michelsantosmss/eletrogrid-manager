@@ -7,6 +7,7 @@ import { OperationsDashboard } from './components/OperationsDashboard';
 import { QuoteDocumentButton } from './components/QuoteDocumentButton';
 import { OrderDocumentButton } from './components/OrderDocumentButton';
 import { ServiceNoteButton } from './components/ServiceNoteButton';
+import { QrCodeScanner } from './components/QrCodeScanner';
 import { useRealtimeCollection } from './hooks/useRealtimeCollection';
 import { auth, firebaseEnabled, loginWithEmail, logout, registerWithEmail, removeRecord, resetPassword, saveRecord, uploadServiceFile } from './services/firebase';
 import { clientsSeed, equipmentSeed, financeSeed, orderSeed, quoteSeed } from './services/seedData';
@@ -49,6 +50,13 @@ export function equipmentForClient(clientId: string, clients: Client[], equipmen
     return equipment.filter((item) => !clients.some((client) => client.id === item.clientId));
   }
   return [];
+}
+
+export function orderFromQr(value: string, orders: ServiceOrder[]) {
+  const normalized = value.trim().toUpperCase();
+  const encodedOrderId = normalized.match(/^ELETROGRID\|([^|]+)\|/)?.[1];
+  const orderId = encodedOrderId ?? normalized.match(/OS-?\d+/)?.[0];
+  return orders.find((order) => order.qrCode?.value.toUpperCase() === normalized || order.id.toUpperCase() === orderId);
 }
 
 function App() {
@@ -208,6 +216,13 @@ function App() {
     setFinance((items) => items.map((item) => item.id === entry.id ? updated : item));
     try { await persist('finance', updated); } catch { setFinance((items) => items.map((item) => item.id === entry.id ? entry : item)); cloudError(); }
   }
+  function openOrderFromQr(value: string) {
+    const order = orderFromQr(value, orders);
+    if (!order) { window.alert('Nenhuma ordem de serviço foi encontrada para este QR Code.'); return; }
+    setSearch(order.id);
+    setStatusFilter('Todas');
+    setActiveModule('Ordens de serviço');
+  }
 
   if (!userReady) return <main className="login-screen">Carregando sessão…</main>;
   if (!isAuthenticated) return <main className="login-screen"><form className="login-card" onSubmit={(event) => handleAuth(event, 'login')}><EletroGridMark/><h1>EletroGrid Manager</h1><p>Acesse a operação técnica com sua conta Firebase.</p><input aria-label="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="E-mail" required/><input aria-label="Senha" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Senha" minLength={6} required/>{authError && <strong className="form-error" role="alert">{authError}</strong>}{authMessage && <strong className="form-success" role="status">{authMessage}</strong>}<button type="submit">Entrar</button><button className="ghost-button" onClick={(e) => handleAuth(e, 'register')} type="button">Criar acesso</button><button className="password-reset-button" onClick={() => void handlePasswordReset()} type="button">Esqueci minha senha</button><button className="link-button" onClick={() => setDemo(true)} type="button">Abrir modo demonstração</button></form></main>;
@@ -215,7 +230,7 @@ function App() {
   return <main className="app-shell">
     <aside className="sidebar"><div className="brand"><EletroGridMark/><div><strong>EletroGrid</strong><small>Manager</small></div></div><nav>{modules.map((module) => <button className={`nav-button ${activeModule === module ? 'active' : ''}`} key={module} onClick={() => setActiveModule(module)} type="button">{module}</button>)}</nav><button className="logout-button" onClick={() => { setDemo(false); void logout(); }} type="button"><LogOut size={18}/>Sair</button></aside>
     <section className="content">
-      <header className="hero"><div><span className="eyebrow"><ShieldCheck size={16}/>Operação integrada</span><h1>Controle técnico em tempo real.</h1><p>Clientes, equipamentos e ordens de serviço em uma única operação.</p></div><label className="search-box"><Search size={18}/><input aria-label="Pesquisa global" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar em todos os registros"/></label></header>
+      <header className="hero"><div><span className="eyebrow"><ShieldCheck size={16}/>Operação integrada</span><h1>Controle técnico em tempo real.</h1><p>Clientes, equipamentos e ordens de serviço em uma única operação.</p></div><div className="hero-actions"><QrCodeScanner onRead={openOrderFromQr}/><label className="search-box"><Search size={18}/><input aria-label="Pesquisa global" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar em todos os registros"/></label></div></header>
       {activeModule === 'Dashboard' && <Dashboard clients={clients} equipment={equipment} orders={orders} finance={finance} demo={demo}/>}
       {activeModule === 'Clientes' && <Clients form={clientForm} items={visibleClients} onDelete={deleteClient} onEdit={(item) => { setEditingClient(item.id); setClientForm(item); }} onSubmit={submitClient} setForm={setClientForm} editing={Boolean(editingClient)}/>}
       {activeModule === 'Equipamentos' && <EquipmentModule clients={clients} form={equipmentForm} items={visibleEquipment} onDelete={deleteEquipment} onEdit={(item) => { setEditingEquipment(item.id); setEquipmentForm(item); }} onSubmit={submitEquipment} setForm={setEquipmentForm} editing={Boolean(editingEquipment)}/>}

@@ -7,7 +7,7 @@ vi.mock('./services/firebase', async (importOriginal) => ({
   firebaseEnabled: false,
 }));
 
-import App from './App';
+import App, { orderFromQr } from './App';
 import { OperationsDashboard } from './components/OperationsDashboard';
 
 afterEach(cleanup);
@@ -140,4 +140,21 @@ test('permite marcar um lançamento como recebido e atualiza o dashboard', () =>
   fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
 
   expect(screen.getByText('Recebido')).toBeInTheDocument();
+});
+
+test('localiza a OS pelo conteúdo da etiqueta QR Code', () => {
+  const order = { id: 'os-000004', clientId: 'cli', equipmentId: 'eq', status: 'Entregue' as const, intakeDate: '2026-07-18', problem: '', diagnosis: '', history: [], qrCode: { value: 'ELETROGRID|OS-000004|eq', url: 'qr.png' } };
+  expect(orderFromQr('ELETROGRID|OS-000004|eq', [order])).toBe(order);
+  expect(orderFromQr('OS-000004', [order])).toBe(order);
+});
+
+test('abre a ordem ao informar manualmente o código do QR', async () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Ler QR Code' }));
+  fireEvent.change(screen.getByPlaceholderText(/ELETROGRID\|OS-000004/i), { target: { value: 'ELETROGRID|OS-1|eq-1' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Localizar OS' }));
+
+  expect(await screen.findByRole('heading', { name: 'Ordens de serviço' })).toBeInTheDocument();
+  expect(await screen.findByText(/OS-1 · Em análise/i)).toBeInTheDocument();
 });
