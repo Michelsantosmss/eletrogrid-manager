@@ -1,33 +1,21 @@
 const labels: Record<string, { icon: string; title: string; subtitle: string }> = {
-  Dashboard: { icon: '⌂', title: 'Dashboard', subtitle: 'Visão geral' },
-  Clientes: { icon: '◎', title: 'Clientes', subtitle: 'Cadastros' },
+  Dashboard: { icon: '▦', title: 'Dashboard', subtitle: 'Visão geral' },
+  Clientes: { icon: '👤', title: 'Clientes', subtitle: 'Cadastros' },
   Equipamentos: { icon: '▣', title: 'Equipamentos', subtitle: 'Aparelhos' },
-  'Ordens de serviço': { icon: '▤', title: 'Ordens de serviço', subtitle: 'Entrada e reparo' },
-  Orçamentos: { icon: '▧', title: 'Orçamentos', subtitle: 'Propostas e valores' },
-  Financeiro: { icon: '$', title: 'Financeiro', subtitle: 'Contas e caixa' },
-  Recepção: { icon: '+', title: 'Recepção', subtitle: 'Nova entrada' },
+  'Ordens de serviço': { icon: '🛠', title: 'Ordens de serviço', subtitle: 'Entrada e reparo' },
+  Orçamentos: { icon: 'R$', title: 'Orçamentos', subtitle: 'Propostas e valores' },
+  Financeiro: { icon: '↗', title: 'Financeiro', subtitle: 'Contas e caixa' },
+  Recepção: { icon: '＋', title: 'Recepção', subtitle: 'Nova entrada' },
 };
 
-const primaryOrder = ['Dashboard', 'Clientes', 'Ordens de serviço', 'Orçamentos', 'Financeiro', 'Equipamentos', 'Recepção'];
-
 function enhanceNavigation() {
-  const nav = document.querySelector('.sidebar nav');
-  if (!nav) return;
-
-  const buttons = [...nav.querySelectorAll<HTMLButtonElement>('.nav-button')];
-  buttons.forEach((button) => {
-    const raw = button.dataset.moduleName ?? button.textContent?.trim() ?? '';
+  document.querySelectorAll<HTMLButtonElement>('.sidebar .nav-button').forEach((button) => {
+    const raw = button.textContent?.trim() ?? '';
     const item = labels[raw];
-    if (!item) return;
-    button.dataset.moduleName = raw;
+    if (!item || button.dataset.clarityReady) return;
     button.dataset.clarityReady = 'true';
     button.setAttribute('aria-label', `${item.title}: ${item.subtitle}`);
     button.innerHTML = `<span class="nav-icon" aria-hidden="true">${item.icon}</span><span class="nav-copy"><strong>${item.title}</strong><small>${item.subtitle}</small></span>`;
-  });
-
-  primaryOrder.forEach((name) => {
-    const button = buttons.find((item) => item.dataset.moduleName === name);
-    if (button) nav.appendChild(button);
   });
 }
 
@@ -55,7 +43,7 @@ function addQuoteGuide() {
   title.parentElement?.parentElement?.insertAdjacentElement('afterend', guide);
 
   guide.querySelector<HTMLButtonElement>('[data-open-orders]')?.addEventListener('click', () => {
-    const target = [...document.querySelectorAll<HTMLButtonElement>('.nav-button')].find((button) => button.dataset.moduleName === 'Ordens de serviço');
+    const target = [...document.querySelectorAll<HTMLButtonElement>('.nav-button')].find((button) => button.textContent?.includes('Ordens de serviço'));
     target?.click();
   });
 }
