@@ -101,3 +101,10 @@ test('vincula cliente e equipamento novos ao criar uma OS', () => {
   fireEvent.click(screen.getByRole('button', { name: /Gerar OS automaticamente/i }));
   expect(screen.getByText('Teste do vínculo')).toBeInTheDocument();
 });
+
+test('oferece instalação de ar-condicionado split como categoria', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Equipamentos' }));
+  expect(screen.getByRole('option', { name: 'Instalação de ar-condicionado split' })).toBeInTheDocument();
+});
