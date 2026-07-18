@@ -5,21 +5,19 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { supabaseStorageEnabled, uploadServiceFileToSupabase } from './supabaseStorage';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? 'demo',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? 'demo.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? 'demo',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? 'demo.appspot.com',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? 'demo',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID ?? 'demo',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? 'AIzaSyBEGrFz-K2xwSqC5-7bgKUW1BDeCwsoZEs',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? 'eletrogrid-manager-v2.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? 'eletrogrid-manager-v2',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? 'eletrogrid-manager-v2.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? '775275227169',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID ?? '1:775275227169:web:680110d8cfc48cf2cc1b60',
 };
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const firebaseEnabled = Boolean(
-  import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID,
-);
+export const firebaseEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 
 export async function loginWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
