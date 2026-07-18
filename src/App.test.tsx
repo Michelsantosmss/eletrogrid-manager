@@ -128,5 +128,16 @@ test('dashboard usa somente as ordens e o faturamento recebidos da conta', () =>
   expect(screen.getAllByText('Aguardando peças')[0].closest('article')).toHaveTextContent('00');
   expect(screen.getAllByText('Prontos para entrega')[0].closest('article')).toHaveTextContent('01');
   expect(screen.getByText('Ordens abertas').closest('article')).toHaveTextContent('00');
+  expect(screen.getByText('A receber')).toBeInTheDocument();
   expect(screen.getAllByText('R$ 120,00')).toHaveLength(2);
+});
+
+test('permite marcar um lançamento como recebido e atualiza o dashboard', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Financeiro' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Marcar como recebido' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
+
+  expect(screen.getByText('Recebido')).toBeInTheDocument();
 });
