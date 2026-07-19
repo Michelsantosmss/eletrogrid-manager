@@ -151,6 +151,8 @@ test('localiza a OS pelo conteúdo da etiqueta QR Code', () => {
 test('abre a ordem ao informar manualmente o código do QR', async () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  expect(screen.queryByRole('button', { name: 'Ler QR Code' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Ordens de serviço' }));
   fireEvent.click(screen.getByRole('button', { name: 'Ler QR Code' }));
   fireEvent.change(screen.getByPlaceholderText(/ELETROGRID\|OS-000004/i), { target: { value: 'ELETROGRID|OS-1|eq-1' } });
   fireEvent.click(screen.getByRole('button', { name: 'Localizar OS' }));
