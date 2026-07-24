@@ -13,6 +13,10 @@ export async function printServiceNote(order: ServiceOrder, client?: Client, equ
     : 0;
   const materialValue = Math.min(quotedMaterialValue, order.serviceValue);
   const serviceValue = Math.max(0, order.serviceValue - materialValue);
+  const discountLine =
+    quote?.discount && quote.discount > 0
+      ? `\nDesconto concedido: ${money.format(quote.discount)}`
+      : '';
   const { pdf, y: startY } = await createPdf('NOTA DE SERVIÇO', order.id.toUpperCase());
   let y = addSection(pdf, startY, 'Cliente', `${client?.name ?? 'Não identificado'}\nCPF/CNPJ: ${client?.document ?? '-'}\nTelefone: ${client?.phone ?? '-'}\nE-mail: ${client?.email ?? '-'}\nCidade: ${client?.city ?? '-'}`);
   y = addSection(pdf, y, 'Equipamento', `${equipment ? `${equipment.equipmentName ? `${equipment.equipmentName} - ` : ''}${equipment.brand} ${equipment.model}` : 'Não identificado'}\nSérie/IMEI: ${equipment?.serial ?? '-'}`);
@@ -23,7 +27,7 @@ export async function printServiceNote(order: ServiceOrder, client?: Client, equ
     pdf,
     y,
     'Valores',
-    `Serviços/mão de obra: ${money.format(serviceValue)}\nPeças e materiais: ${money.format(materialValue)}\nTOTAL DA NOTA: ${money.format(order.serviceValue)}`,
+    `Serviços/mão de obra: ${money.format(serviceValue)}\nPeças e materiais: ${money.format(materialValue)}${discountLine}\nTOTAL DA NOTA: ${money.format(order.serviceValue)}`,
   );
   y = addSection(pdf, y, 'Garantia', order.warranty || '-');
   y = addSection(pdf, y, 'Observações técnicas', order.technicianNotes || '-');

@@ -42,16 +42,28 @@ test('gera o PDF da nota de serviço com execução, garantia e valor obrigatór
     { id: 'os-000003', clientId: 'cli-1', equipmentId: 'eq-1', status: 'Finalizado', intakeDate: '2026-07-17', problem: 'Falha', diagnosis: 'Componente danificado', servicePerformed: 'Substituição do componente e testes', serviceValue: 250, warranty: '90 dias', history: [] },
     { id: 'cli-1', name: 'Cliente Teste', document: '123', phone: '11999999999', email: 'cliente@teste.com', city: 'São Paulo' },
     undefined,
-    { id: 'orc-1', serviceOrderId: 'os-000003', items: [{ id: 'servico', description: 'Reparo', kind: 'Serviço', quantity: 1, unitPrice: 150 }, { id: 'peca', description: 'Componente', kind: 'Peça/material', quantity: 1, unitPrice: 100 }], discount: 0, deadline: '5 dias', warranty: '90 dias', notes: '', approved: true },
+    { id: 'orc-1', serviceOrderId: 'os-000003', items: [{ id: 'servico', description: 'Reparo', kind: 'Serviço', quantity: 1, unitPrice: 170 }, { id: 'peca', description: 'Componente', kind: 'Peça/material', quantity: 1, unitPrice: 100 }], discount: 20, deadline: '5 dias', warranty: '90 dias', notes: '', approved: true },
   );
   expect(addSection.mock.calls.flat().join(' ')).toContain('Substituição do componente e testes');
   expect(addSection.mock.calls.flat().join(' ')).toContain('Cliente Teste');
   expect(addSection.mock.calls.flat().join(' ')).toContain('R$ 250,00');
   expect(addSection.mock.calls.flat().join(' ')).toContain('Serviços/mão de obra: R$ 150,00');
   expect(addSection.mock.calls.flat().join(' ')).toContain('Peças e materiais: R$ 100,00');
+  expect(addSection.mock.calls.flat().join(' ')).toContain('Desconto concedido: R$ 20,00');
   expect(downloadPdf).toHaveBeenCalledWith(fakePdf, 'nota-de-servico-cliente-teste-os-000003.pdf');
 });
 
 test('impede gerar a nota de serviço sem valor', async () => {
   await expect(printServiceNote({ id: 'os-000004', clientId: 'cli-1', equipmentId: 'eq-1', status: 'Finalizado', intakeDate: '2026-07-17', problem: 'Falha', diagnosis: '', history: [] })).rejects.toThrow('Informe o valor do serviço');
+});
+
+test('omite a linha de desconto da nota quando não houver desconto', async () => {
+  await printServiceNote(
+    { id: 'os-000005', clientId: 'cli-1', equipmentId: 'eq-1', status: 'Finalizado', intakeDate: '2026-07-17', problem: 'Falha', diagnosis: '', serviceValue: 120, history: [] },
+    { id: 'cli-1', name: 'Cliente Teste', document: '123', phone: '', email: '', city: '' },
+    undefined,
+    { id: 'orc-2', serviceOrderId: 'os-000005', items: [{ id: 'servico', description: 'Reparo', kind: 'Serviço', quantity: 1, unitPrice: 120 }], discount: 0, deadline: '', warranty: '', notes: '', approved: true },
+  );
+
+  expect(addSection.mock.calls.flat().join(' ')).not.toContain('Desconto concedido');
 });
