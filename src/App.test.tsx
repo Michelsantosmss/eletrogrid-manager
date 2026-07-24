@@ -138,6 +138,19 @@ test('dashboard usa somente as ordens e o faturamento recebidos da conta', () =>
   expect(screen.getAllByText('R$ 120,00')).toHaveLength(2);
 });
 
+test('dashboard desconta peças e exibe o faturamento líquido previsto', () => {
+  render(<OperationsDashboard
+    clients={[]}
+    equipment={[]}
+    orders={[]}
+    finance={[{ id: 'fin-280', type: 'Receber', description: 'Orçamento ORC-1', amount: 280, materialAmount: 80, dueDate: '2026-07-24', paid: false }]}
+    demo={false}
+  />);
+
+  expect(screen.getAllByText('R$ 200,00')).toHaveLength(2);
+  expect(screen.queryByText('R$ 280,00')).not.toBeInTheDocument();
+});
+
 test('permite marcar um lançamento como recebido e atualiza o dashboard', () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));

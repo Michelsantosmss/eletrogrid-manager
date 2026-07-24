@@ -936,6 +936,7 @@ function App() {
             equipment={equipment}
             orders={orders}
             finance={finance}
+            quotes={quotes}
             demo={demo}
           />
         )}
@@ -1069,12 +1070,14 @@ function Dashboard({
   equipment,
   orders,
   finance,
+  quotes,
   demo,
 }: {
   clients: Client[];
   equipment: Equipment[];
   orders: ServiceOrder[];
   finance: FinanceEntry[];
+  quotes: Quote[];
   demo: boolean;
 }) {
   return (
@@ -1083,6 +1086,7 @@ function Dashboard({
       equipment={equipment}
       orders={orders}
       finance={finance}
+      quotes={quotes}
       demo={demo}
     />
   );

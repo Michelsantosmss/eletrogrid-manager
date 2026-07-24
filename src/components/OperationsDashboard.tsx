@@ -1,22 +1,34 @@
 import { ClipboardCheck, Clock3, PackageCheck, ReceiptText, RotateCw, Truck, Wrench } from 'lucide-react';
 import { OrderDocumentButton } from './OrderDocumentButton';
-import { Client, Equipment, FinanceEntry, ServiceOrder, ServiceStatus } from '../types';
+import { Client, Equipment, FinanceEntry, Quote, ServiceOrder, ServiceStatus } from '../types';
+import { quoteItems } from '../services/quoteDocument';
 
 type Props = {
   clients: Client[];
   equipment: Equipment[];
   orders: ServiceOrder[];
   finance: FinanceEntry[];
+  quotes?: Quote[];
   demo: boolean;
 };
 const cards: Array<{ status: ServiceStatus; label: string; icon: typeof ClipboardCheck; tone: string }> = [
   { status: 'Em análise', label: 'Em diagnóstico', icon: ClipboardCheck, tone: 'blue' }, { status: 'Aguardando peça', label: 'Aguardando peças', icon: PackageCheck, tone: 'orange' }, { status: 'Em reparo', label: 'Em reparo', icon: Wrench, tone: 'red' }, { status: 'Finalizado', label: 'Em testes', icon: RotateCw, tone: 'purple' }, { status: 'Entregue', label: 'Prontos para entrega', icon: Truck, tone: 'green' },
 ];
-export function OperationsDashboard({ clients, equipment, orders, finance, demo }: Props) {
+export function OperationsDashboard({ clients, equipment, orders, finance, quotes = [], demo }: Props) {
   const total = orders.length;
   const revenueEntries = finance.filter((entry) => entry.type === 'Receber');
-  const revenueTotal = revenueEntries.reduce((sum, entry) => sum + entry.amount, 0);
-  const receivable = revenueEntries.filter((entry) => !entry.paid).reduce((sum, entry) => sum + entry.amount, 0);
+  const netRevenue = (entry: FinanceEntry) => {
+    if (typeof entry.serviceAmount === 'number') return entry.serviceAmount;
+    const quote = quotes.find((item) => item.id === entry.quoteId || entry.description === `Orçamento ${item.id.toUpperCase()}`);
+    const materials = typeof entry.materialAmount === 'number'
+      ? entry.materialAmount
+      : quote
+        ? quoteItems(quote).filter((item) => item.kind === 'Peça/material').reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)
+        : 0;
+    return Math.max(0, entry.amount - materials);
+  };
+  const revenueTotal = revenueEntries.reduce((sum, entry) => sum + netRevenue(entry), 0);
+  const receivable = revenueEntries.filter((entry) => !entry.paid).reduce((sum, entry) => sum + netRevenue(entry), 0);
   const received = revenueTotal - receivable;
   const revenueStatus = revenueTotal === 0 ? 'Sem faturamento' : receivable === 0 ? 'Recebido' : received > 0 ? 'Parcialmente recebido' : 'A receber';
   const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
