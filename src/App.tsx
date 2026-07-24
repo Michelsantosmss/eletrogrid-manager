@@ -459,7 +459,7 @@ function App() {
         exitDate:
           editingOrderStatus === "Entregue"
             ? (original.exitDate ?? today())
-            : undefined,
+            : null,
         qrCode,
         documents,
         history: [
@@ -919,7 +919,7 @@ function App() {
                 order,
                 {
                   status,
-                  exitDate: status === "Entregue" ? today() : undefined,
+                  exitDate: status === "Entregue" ? today() : null,
                 },
                 `Status alterado para ${status}.`,
               )
