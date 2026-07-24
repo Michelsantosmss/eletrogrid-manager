@@ -548,11 +548,13 @@ function App() {
     );
     try {
       await persist("serviceOrders", record);
+      return true;
     } catch {
       setOrders((items) =>
         items.map((item) => (item.id === order.id ? order : item)),
       );
       cloudError();
+      return false;
     }
   }
   async function attachFile(order: ServiceOrder, file: File) {
@@ -1232,7 +1234,7 @@ function Orders({
   onCancelEdit: () => void;
   onDelete: (order: ServiceOrder) => void;
   onEdit: (order: ServiceOrder) => void;
-  onStatus: (order: ServiceOrder, status: ServiceStatus) => void;
+  onStatus: (order: ServiceOrder, status: ServiceStatus) => Promise<boolean>;
   onUpdate: (
     order: ServiceOrder,
     changes: Partial<ServiceOrder>,
@@ -1244,6 +1246,9 @@ function Orders({
   setStatusFilter: (value: "Todas" | ServiceStatus) => void;
   setEditingOrderStatus: (value: ServiceStatus) => void;
 }) {
+  const [statusDrafts, setStatusDrafts] = useState<
+    Record<string, ServiceStatus>
+  >({});
   const availableEquipment = equipmentForClient(
     form.clientId,
     clients,
@@ -1376,17 +1381,40 @@ function Orders({
                   </span>
                   <p>{item.problem}</p>
                 </div>
-                <select
-                  aria-label={`Status ${item.id}`}
-                  value={item.status}
-                  onChange={(e) =>
-                    onStatus(item, e.target.value as ServiceStatus)
-                  }
-                >
-                  {statuses.map((status) => (
-                    <option key={status}>{status}</option>
-                  ))}
-                </select>
+                <div className="status-control">
+                  <select
+                    aria-label={`Status ${item.id}`}
+                    value={statusDrafts[item.id] ?? item.status}
+                    onChange={(event) =>
+                      setStatusDrafts((current) => ({
+                        ...current,
+                        [item.id]: event.target.value as ServiceStatus,
+                      }))
+                    }
+                  >
+                    {statuses.map((status) => (
+                      <option key={status}>{status}</option>
+                    ))}
+                  </select>
+                  <button
+                    aria-label={`Salvar status ${item.id.toUpperCase()}`}
+                    disabled={!statusDrafts[item.id] || statusDrafts[item.id] === item.status}
+                    onClick={async () => {
+                      const status = statusDrafts[item.id];
+                      if (!status) return;
+                      const saved = await onStatus(item, status);
+                      if (!saved) return;
+                      setStatusDrafts((current) => {
+                        const next = { ...current };
+                        delete next[item.id];
+                        return next;
+                      });
+                    }}
+                    type="button"
+                  >
+                    Salvar status
+                  </button>
+                </div>
               </div>
               <div className="service-details">
                 <textarea

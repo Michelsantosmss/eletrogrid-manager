@@ -166,6 +166,7 @@ test('permite alterar e salvar o status da OS', async () => {
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
   fireEvent.click(screen.getByRole('button', { name: 'Ordens de serviço' }));
   fireEvent.change(screen.getByLabelText('Status os-1'), { target: { value: 'Entregue' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar status OS-1' }));
 
   expect(await screen.findByText(/OS-1 · Entregue/i)).toBeInTheDocument();
   expect(screen.getByLabelText('Status os-1')).toHaveValue('Entregue');
