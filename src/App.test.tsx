@@ -75,7 +75,13 @@ test('leva o total do orçamento para a nota e permite alterar o valor', async (
   expect(valueInput).toHaveValue(150);
   fireEvent.change(valueInput, { target: { value: '200' } });
   expect(valueInput).toHaveValue(200);
-  expect(screen.getAllByRole('button', { name: /Baixar nota PDF/i })[0]).toBeEnabled();
+  expect(screen.queryByRole('button', { name: /Baixar nota PDF/i })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Orçamentos' }));
+  const approveButton = screen.getByRole('button', { name: 'Aprovar e lançar' });
+  fireEvent.click(approveButton);
+  await waitFor(() => expect(approveButton).toBeDisabled());
+  fireEvent.click(screen.getByRole('button', { name: 'Financeiro' }));
+  expect(screen.getByRole('button', { name: /Baixar nota PDF/i })).toBeEnabled();
 });
 
 test('vincula cliente e equipamento novos ao criar uma OS', async () => {

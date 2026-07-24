@@ -1018,7 +1018,10 @@ function App() {
         {activeModule === "Financeiro" && (
           <Finance
             cashFlow={cashFlow}
+            clients={clients}
+            equipment={equipment}
             items={finance}
+            orders={orders}
             quotes={quotes}
             onTogglePaid={updateFinanceStatus}
           />
@@ -1051,6 +1054,14 @@ function financeMaterialAmount(entry: FinanceEntry, quotes: Quote[]) {
       entry.description === `Orçamento ${quote.id.toUpperCase()}`,
   );
   return linkedQuote ? quoteBreakdown(linkedQuote).materials : 0;
+}
+
+function financeQuote(entry: FinanceEntry, quotes: Quote[]) {
+  return quotes.find(
+    (quote) =>
+      quote.id === entry.quoteId ||
+      entry.description === `Orçamento ${quote.id.toUpperCase()}`,
+  );
 }
 
 function Dashboard({
@@ -1462,7 +1473,6 @@ function Orders({
           );
           const serviceValue =
             item.serviceValue ?? (linkedQuote ? quoteTotal(linkedQuote) : 0);
-          const noteOrder = { ...item, serviceValue };
           return (
             <article className="record-card order-card" key={item.id}>
               <div className="order-summary-line">
@@ -1595,12 +1605,6 @@ function Orders({
                   <FileText size={16} />
                   Criar orçamento
                 </button>
-                <ServiceNoteButton
-                  client={client}
-                  equipment={asset}
-                  order={noteOrder}
-                  quote={linkedQuote}
-                />
                 <label className="file-button">
                   Anexar arquivo
                   <input
@@ -1881,11 +1885,17 @@ function Quotes({
 function Finance({
   items,
   quotes,
+  clients,
+  equipment,
+  orders,
   cashFlow,
   onTogglePaid,
 }: {
   items: FinanceEntry[];
   quotes: Quote[];
+  clients: Client[];
+  equipment: Equipment[];
+  orders: ServiceOrder[];
   cashFlow: number;
   onTogglePaid: (item: FinanceEntry) => void;
 }) {
@@ -1937,7 +1947,21 @@ function Finance({
         </article>
       </div>
       <Cards>
-        {items.map((item) => (
+        {items.map((item) => {
+          const linkedQuote = financeQuote(item, quotes);
+          const order = orders.find(
+            (entry) => entry.id === linkedQuote?.serviceOrderId,
+          );
+          const relations = resolveOrderRelations(order, clients, equipment);
+          const noteOrder = order
+            ? {
+                ...order,
+                serviceValue:
+                  order.serviceValue ??
+                  (linkedQuote ? quoteTotal(linkedQuote) : item.amount),
+              }
+            : undefined;
+          return (
           <article className="record-card" key={item.id}>
             <strong>{item.type}</strong>
             <span>{item.description}</span>
@@ -1969,9 +1993,18 @@ function Finance({
                     ? "Marcar como recebido"
                     : "Marcar como pago"}
               </button>
+              {item.type === "Receber" && noteOrder && (
+                <ServiceNoteButton
+                  client={relations.client}
+                  equipment={relations.equipment}
+                  order={noteOrder}
+                  quote={linkedQuote}
+                />
+              )}
             </div>
           </article>
-        ))}
+          );
+        })}
       </Cards>
     </Section>
   );
