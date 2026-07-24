@@ -132,9 +132,9 @@ test('dashboard usa somente as ordens e o faturamento recebidos da conta', () =>
   />);
 
   expect(screen.getByText('1 ordens registradas')).toBeInTheDocument();
-  expect(screen.getAllByText('Em diagnóstico')[0].closest('article')).toHaveTextContent('00');
-  expect(screen.getAllByText('Aguardando peças')[0].closest('article')).toHaveTextContent('00');
-  expect(screen.getAllByText('Prontos para entrega')[0].closest('article')).toHaveTextContent('01');
+  expect(screen.getAllByText('Em análise')[0].closest('article')).toHaveTextContent('00');
+  expect(screen.getAllByText('Aguardando peça')[0].closest('article')).toHaveTextContent('00');
+  expect(screen.getAllByText('Entregue')[0].closest('article')).toHaveTextContent('01');
   expect(screen.getByText('Ordens abertas').closest('article')).toHaveTextContent('00');
   expect(screen.getByText('A receber')).toBeInTheDocument();
   expect(screen.getAllByText('R$ 120,00')).toHaveLength(2);
@@ -153,6 +153,20 @@ test('dashboard desconta peças e exibe o faturamento líquido previsto', () => 
   expect(screen.queryByText('R$ 280,00')).not.toBeInTheDocument();
 });
 
+test('dashboard exibe exatamente os status cadastrados nas ordens', () => {
+  const finalizada = (id: string) => ({ id, clientId: 'cli', equipmentId: 'eq', status: 'Finalizado' as const, intakeDate: '2026-07-24', problem: '', diagnosis: '', history: [] });
+  render(<OperationsDashboard
+    clients={[]}
+    equipment={[]}
+    orders={[finalizada('os-1'), finalizada('os-2')]}
+    finance={[]}
+    demo={false}
+  />);
+
+  expect(screen.getAllByText('Finalizado')[0].closest('article')).toHaveTextContent('02');
+  expect(screen.queryByText('Em testes')).not.toBeInTheDocument();
+});
+
 test('permite marcar um lançamento como recebido e atualiza o dashboard', () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
@@ -160,7 +174,7 @@ test('permite marcar um lançamento como recebido e atualiza o dashboard', () =>
   fireEvent.click(screen.getByRole('button', { name: 'Marcar como recebido' }));
   fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
 
-  expect(screen.getByText('Recebido')).toBeInTheDocument();
+  expect(screen.getAllByText('Recebido').length).toBeGreaterThan(0);
 });
 
 test('localiza a OS pelo conteúdo da etiqueta QR Code', () => {

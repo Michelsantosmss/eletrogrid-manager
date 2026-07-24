@@ -12,7 +12,12 @@ type Props = {
   demo: boolean;
 };
 const cards: Array<{ status: ServiceStatus; label: string; icon: typeof ClipboardCheck; tone: string }> = [
-  { status: 'Em análise', label: 'Em diagnóstico', icon: ClipboardCheck, tone: 'blue' }, { status: 'Aguardando peça', label: 'Aguardando peças', icon: PackageCheck, tone: 'orange' }, { status: 'Em reparo', label: 'Em reparo', icon: Wrench, tone: 'red' }, { status: 'Finalizado', label: 'Em testes', icon: RotateCw, tone: 'purple' }, { status: 'Entregue', label: 'Prontos para entrega', icon: Truck, tone: 'green' },
+  { status: 'Recebido', label: 'Recebido', icon: ClipboardCheck, tone: 'navy' },
+  { status: 'Em análise', label: 'Em análise', icon: ClipboardCheck, tone: 'blue' },
+  { status: 'Aguardando peça', label: 'Aguardando peça', icon: PackageCheck, tone: 'orange' },
+  { status: 'Em reparo', label: 'Em reparo', icon: Wrench, tone: 'red' },
+  { status: 'Finalizado', label: 'Finalizado', icon: RotateCw, tone: 'purple' },
+  { status: 'Entregue', label: 'Entregue', icon: Truck, tone: 'green' },
 ];
 export function OperationsDashboard({ clients, equipment, orders, finance, quotes = [], demo }: Props) {
   const total = orders.length;
