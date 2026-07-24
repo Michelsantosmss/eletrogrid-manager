@@ -613,8 +613,19 @@ function App() {
     event.preventDefault();
     if (!quoteDraft) return;
     const exists = quotes.some((quote) => quote.id === quoteDraft.id);
+    const linkedFinance = finance.find(
+      (entry) =>
+        entry.type === "Receber" &&
+        entry.description === `Orçamento ${quoteDraft.id.toUpperCase()}`,
+    );
+    const updatedFinance = linkedFinance
+      ? { ...linkedFinance, amount: quoteTotal(quoteDraft) }
+      : undefined;
     try {
-      await persist("quotes", quoteDraft);
+      await Promise.all([
+        persist("quotes", quoteDraft),
+        ...(updatedFinance ? [persist("finance", updatedFinance)] : []),
+      ]);
     } catch {
       cloudError();
       return;
@@ -626,6 +637,12 @@ function App() {
           )
         : [quoteDraft, ...items],
     );
+    if (updatedFinance)
+      setFinance((items) =>
+        items.map((entry) =>
+          entry.id === updatedFinance.id ? updatedFinance : entry,
+        ),
+      );
     const linkedOrder = orders.find(
       (order) => order.id === quoteDraft.serviceOrderId,
     );
@@ -636,6 +653,44 @@ function App() {
         `Valor do serviço atualizado pelo orçamento ${quoteDraft.id.toUpperCase()}.`,
       );
     setQuoteDraft(null);
+  }
+  function editQuote(quote: Quote) {
+    setQuoteDraft({
+      ...quote,
+      items: quoteItems(quote),
+      deadline: quote.deadline || "5 dias úteis",
+      warranty: quote.warranty || "90 dias sobre o serviço executado",
+      notes: quote.notes || "",
+    });
+  }
+  async function deleteQuote(quote: Quote) {
+    if (
+      !window.confirm(
+        `Excluir o orçamento ${quote.id.toUpperCase()}? O lançamento financeiro vinculado também será removido.`,
+      )
+    )
+      return;
+    const linkedFinance = finance.filter(
+      (entry) =>
+        entry.type === "Receber" &&
+        entry.description === `Orçamento ${quote.id.toUpperCase()}`,
+    );
+    try {
+      await Promise.all([
+        destroy("quotes", quote.id),
+        ...linkedFinance.map((entry) => destroy("finance", entry.id)),
+      ]);
+    } catch {
+      cloudError();
+      return;
+    }
+    setQuotes((items) => items.filter((item) => item.id !== quote.id));
+    setFinance((items) =>
+      items.filter(
+        (entry) => !linkedFinance.some((linked) => linked.id === entry.id),
+      ),
+    );
+    if (quoteDraft?.id === quote.id) setQuoteDraft(null);
   }
   async function approveQuote(quote: Quote) {
     const approved = { ...quote, approved: true };
@@ -940,6 +995,8 @@ function App() {
             items={quotes}
             onApprove={approveQuote}
             onCancel={() => setQuoteDraft(null)}
+            onDelete={deleteQuote}
+            onEdit={editQuote}
             onSave={saveQuote}
             setDraft={setQuoteDraft}
           />
@@ -1557,6 +1614,8 @@ function Quotes({
   onSave,
   onCancel,
   onApprove,
+  onDelete,
+  onEdit,
 }: {
   clients: Client[];
   equipment: Equipment[];
@@ -1567,6 +1626,8 @@ function Quotes({
   onSave: (event: FormEvent) => void;
   onCancel: () => void;
   onApprove: (quote: Quote) => void;
+  onDelete: (quote: Quote) => void;
+  onEdit: (quote: Quote) => void;
 }) {
   const updateItem = (id: string, changes: Partial<Quote["items"][number]>) =>
     draft &&
@@ -1582,7 +1643,11 @@ function Quotes({
         <form className="quote-form" onSubmit={onSave}>
           <div className="quote-form-heading">
             <div>
-              <strong>Novo orçamento</strong>
+              <strong>
+                {items.some((item) => item.id === draft.id)
+                  ? "Editar orçamento"
+                  : "Novo orçamento"}
+              </strong>
               <span>Vinculado à {draft.serviceOrderId.toUpperCase()}</span>
             </div>
             <button className="ghost-button" onClick={onCancel} type="button">
@@ -1735,6 +1800,24 @@ function Quotes({
               ))}
               <strong>Total: {money.format(quoteTotal(item))}</strong>
               <div className="card-actions">
+                <button
+                  aria-label={`Editar orçamento ${item.id.toUpperCase()}`}
+                  className="ghost-button"
+                  onClick={() => onEdit(item)}
+                  type="button"
+                >
+                  <Pencil size={16} />
+                  Editar orçamento
+                </button>
+                <button
+                  aria-label={`Excluir orçamento ${item.id.toUpperCase()}`}
+                  className="danger-button"
+                  onClick={() => onDelete(item)}
+                  type="button"
+                >
+                  <Trash2 size={16} />
+                  Excluir orçamento
+                </button>
                 <QuoteDocumentButton
                   quote={item}
                   order={order}

@@ -195,3 +195,25 @@ test('permite excluir uma OS após confirmação', async () => {
   await waitFor(() => expect(screen.queryByText(/OS-1 · Em análise/i)).not.toBeInTheDocument());
   confirmation.mockRestore();
 });
+
+test('permite editar e excluir um orçamento', async () => {
+  const confirmation = vi.spyOn(window, 'confirm').mockReturnValue(true);
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Ordens de serviço' }));
+  fireEvent.click(screen.getAllByRole('button', { name: /Criar orçamento/i })[0]);
+  fireEvent.change(screen.getByLabelText('Descrição do item'), { target: { value: 'Orçamento original' } });
+  fireEvent.change(screen.getByLabelText('Valor unitário'), { target: { value: '120' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar orçamento' }));
+  expect(await screen.findByText(/Orçamento original/i)).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /Editar orçamento ORC-/i }));
+  expect(screen.getByText('Editar orçamento', { selector: 'strong' })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Descrição do item'), { target: { value: 'Orçamento atualizado' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar orçamento' }));
+  expect(await screen.findByText(/Orçamento atualizado/i)).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /Excluir orçamento ORC-/i }));
+  await waitFor(() => expect(screen.queryByText(/Orçamento atualizado/i)).not.toBeInTheDocument());
+  confirmation.mockRestore();
+});
