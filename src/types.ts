@@ -4,4 +4,14 @@ export type Equipment = { id: string; clientId: string; category: 'Eletrônico' 
 export type ServiceOrder = { id: string; clientId: string; equipmentId: string; status: ServiceStatus; intakeDate: string; exitDate?: string | null; problem: string; diagnosis: string; servicePerformed?: string; serviceValue?: number; technicianNotes?: string; warranty?: string; qrCode?: { value: string; url: string }; history: Array<{ at: string; status: ServiceStatus; note: string }>; documents?: Array<{ name: string; url: string }> };
 export type QuoteItem = { id: string; description: string; kind: 'Peça/material' | 'Serviço'; quantity: number; unitPrice: number };
 export type Quote = { id: string; serviceOrderId: string; items: QuoteItem[]; discount: number; deadline: string; warranty: string; notes: string; approved: boolean; parts?: number; labor?: number };
-export type FinanceEntry = { id: string; type: 'Receber' | 'Pagar'; description: string; amount: number; dueDate: string; paid: boolean };
+export type FinanceEntry = {
+  id: string;
+  type: 'Receber' | 'Pagar';
+  description: string;
+  amount: number;
+  dueDate: string;
+  paid: boolean;
+  quoteId?: string;
+  serviceAmount?: number;
+  materialAmount?: number;
+};

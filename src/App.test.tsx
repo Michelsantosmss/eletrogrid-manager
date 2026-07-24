@@ -217,3 +217,32 @@ test('permite editar e excluir um orçamento', async () => {
   await waitFor(() => expect(screen.queryByText(/Orçamento atualizado/i)).not.toBeInTheDocument());
   confirmation.mockRestore();
 });
+
+test('separa serviços e materiais e desconta as peças do valor a receber', async () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Ordens de serviço' }));
+  fireEvent.click(screen.getAllByRole('button', { name: /Criar orçamento/i })[0]);
+
+  fireEvent.change(screen.getByLabelText('Descrição do item'), { target: { value: 'Instalação' } });
+  fireEvent.change(screen.getByLabelText('Valor unitário'), { target: { value: '200' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Adicionar item' }));
+  const descriptions = screen.getAllByLabelText('Descrição do item');
+  const types = screen.getAllByLabelText('Tipo do item');
+  const prices = screen.getAllByLabelText('Valor unitário');
+  fireEvent.change(descriptions[1], { target: { value: 'Peça de reposição' } });
+  fireEvent.change(types[1], { target: { value: 'Peça/material' } });
+  fireEvent.change(prices[1], { target: { value: '80' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar orçamento' }));
+  const quoteCard = (await screen.findByText(/Peça de reposição/i)).closest('article');
+  const approveButton = quoteCard!.querySelector('button:not([aria-label]):last-child') as HTMLButtonElement;
+  fireEvent.click(approveButton);
+  await waitFor(() => expect(approveButton).toBeDisabled());
+  fireEvent.click(screen.getByRole('button', { name: 'Financeiro' }));
+
+  expect(screen.getByText('Serviços a receber').closest('article')).toHaveTextContent('R$ 800,00');
+  expect(screen.getByText('Materiais/peças').closest('article')).toHaveTextContent('R$ 80,00');
+  const financeCard = screen.getByText(/^Orçamento ORC-/i).closest('article');
+  expect(financeCard).toHaveTextContent('Serviços: R$ 200,00');
+  expect(financeCard).toHaveTextContent('Materiais/peças: R$ 80,00');
+});

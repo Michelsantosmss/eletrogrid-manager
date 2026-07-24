@@ -282,11 +282,14 @@ function App() {
       ),
     [orders, search, statusFilter],
   );
-  const cashFlow = finance.reduce(
-    (total, item) =>
-      total + (item.type === "Receber" ? item.amount : -item.amount),
-    0,
-  );
+  const cashFlow = finance.reduce((total, item) => {
+    const materialAmount = financeMaterialAmount(item, quotes);
+    const amount =
+      item.type === "Receber"
+        ? Math.max(0, item.amount - materialAmount)
+        : -item.amount;
+    return total + amount;
+  }, 0);
   const isAuthenticated = demo || authenticated;
 
   async function handleAuth(event: FormEvent, mode: "login" | "register") {
@@ -618,8 +621,15 @@ function App() {
         entry.type === "Receber" &&
         entry.description === `Orçamento ${quoteDraft.id.toUpperCase()}`,
     );
+    const breakdown = quoteBreakdown(quoteDraft);
     const updatedFinance = linkedFinance
-      ? { ...linkedFinance, amount: quoteTotal(quoteDraft) }
+      ? {
+          ...linkedFinance,
+          amount: breakdown.total,
+          quoteId: quoteDraft.id,
+          serviceAmount: breakdown.services,
+          materialAmount: breakdown.materials,
+        }
       : undefined;
     try {
       await Promise.all([
@@ -694,13 +704,17 @@ function App() {
   }
   async function approveQuote(quote: Quote) {
     const approved = { ...quote, approved: true };
+    const breakdown = quoteBreakdown(quote);
     const entry: FinanceEntry = {
       id: makeId("fin"),
       type: "Receber",
       description: `Orçamento ${quote.id.toUpperCase()}`,
-      amount: quoteTotal(quote),
+      amount: breakdown.total,
       dueDate: today(),
       paid: false,
+      quoteId: quote.id,
+      serviceAmount: breakdown.services,
+      materialAmount: breakdown.materials,
     };
     try {
       await Promise.all([
@@ -1005,6 +1019,7 @@ function App() {
           <Finance
             cashFlow={cashFlow}
             items={finance}
+            quotes={quotes}
             onTogglePaid={updateFinanceStatus}
           />
         )}
@@ -1015,6 +1030,29 @@ function App() {
 
 const match = (term: string, ...values: string[]) =>
   values.join(" ").toLocaleLowerCase().includes(term.toLocaleLowerCase());
+
+function quoteBreakdown(quote: Quote) {
+  const materials = quoteItems(quote)
+    .filter((item) => item.kind === "Peça/material")
+    .reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const total = quoteTotal(quote);
+  return {
+    total,
+    materials: Math.min(materials, total),
+    services: Math.max(0, total - materials),
+  };
+}
+
+function financeMaterialAmount(entry: FinanceEntry, quotes: Quote[]) {
+  if (typeof entry.materialAmount === "number") return entry.materialAmount;
+  const linkedQuote = quotes.find(
+    (quote) =>
+      quote.id === entry.quoteId ||
+      entry.description === `Orçamento ${quote.id.toUpperCase()}`,
+  );
+  return linkedQuote ? quoteBreakdown(linkedQuote).materials : 0;
+}
+
 function Dashboard({
   clients,
   equipment,
@@ -1841,19 +1879,28 @@ function Quotes({
 }
 function Finance({
   items,
+  quotes,
   cashFlow,
   onTogglePaid,
 }: {
   items: FinanceEntry[];
+  quotes: Quote[];
   cashFlow: number;
   onTogglePaid: (item: FinanceEntry) => void;
 }) {
+  const netAmount = (item: FinanceEntry) =>
+    item.type === "Receber"
+      ? Math.max(0, item.amount - financeMaterialAmount(item, quotes))
+      : item.amount;
   const received = items
     .filter((item) => item.type === "Receber" && item.paid)
-    .reduce((sum, item) => sum + item.amount, 0);
+    .reduce((sum, item) => sum + netAmount(item), 0);
   const receivable = items
     .filter((item) => item.type === "Receber" && !item.paid)
-    .reduce((sum, item) => sum + item.amount, 0);
+    .reduce((sum, item) => sum + netAmount(item), 0);
+  const materials = items
+    .filter((item) => item.type === "Receber" && !item.paid)
+    .reduce((sum, item) => sum + financeMaterialAmount(item, quotes), 0);
   return (
     <Section
       eyebrow="Financeiro"
@@ -1862,8 +1909,12 @@ function Finance({
     >
       <div className="metrics-grid">
         <article className="metric-card">
-          <small>A receber</small>
+          <small>Serviços a receber</small>
           <strong>{money.format(receivable)}</strong>
+        </article>
+        <article className="metric-card">
+          <small>Materiais/peças</small>
+          <strong>{money.format(materials)}</strong>
         </article>
         <article className="metric-card">
           <small>Recebido</small>
@@ -1893,6 +1944,18 @@ function Finance({
               {item.dueDate} · {item.paid ? "Pago" : "Aberto"}
             </span>
             <strong>{money.format(item.amount)}</strong>
+            {item.type === "Receber" &&
+              financeMaterialAmount(item, quotes) > 0 && (
+                <>
+                  <span>
+                    Serviços: {money.format(netAmount(item))}
+                  </span>
+                  <span>
+                    Materiais/peças:{" "}
+                    {money.format(financeMaterialAmount(item, quotes))}
+                  </span>
+                </>
+              )}
             <div className="card-actions">
               <button
                 className="ghost-button"
