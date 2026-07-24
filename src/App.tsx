@@ -1537,7 +1537,7 @@ function Orders({
                   placeholder="Garantia do serviço"
                 />
                 <label className="service-value-field">
-                  <span>Valor do serviço (R$) *</span>
+                  <span>Valor total da nota (R$) *</span>
                   <input
                     aria-label={`Valor do serviço ${item.id}`}
                     min="0.01"
@@ -1599,6 +1599,7 @@ function Orders({
                   client={client}
                   equipment={asset}
                   order={noteOrder}
+                  quote={linkedQuote}
                 />
                 <label className="file-button">
                   Anexar arquivo
