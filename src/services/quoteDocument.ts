@@ -1,5 +1,6 @@
 import { Client, Equipment, Quote, ServiceOrder } from '../types';
 import { addFooter, addSection, createPdf, downloadPdf } from './pdfDocument';
+import { documentFilename } from './documentFilename';
 
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -20,5 +21,12 @@ export async function printQuote(quote: Quote, order?: ServiceOrder, client?: Cl
   y = addSection(pdf, y, 'Prazo e garantia', `Prazo de execução: ${quote.deadline || '-'}\nGarantia: ${quote.warranty || '-'}`);
   addSection(pdf, y, 'Condições e observações', quote.notes || '-');
   addFooter(pdf, `Orçamento ${quote.id.toUpperCase()}`);
-  downloadPdf(pdf, `orcamento-${quote.id.toLowerCase()}.pdf`);
+  downloadPdf(
+    pdf,
+    documentFilename(
+      'orcamento',
+      client?.name,
+      order?.id ?? quote.serviceOrderId,
+    ),
+  );
 }

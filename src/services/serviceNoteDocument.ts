@@ -1,6 +1,7 @@
 import { Client, Equipment, Quote, ServiceOrder } from '../types';
 import { addFooter, addSection, createPdf, downloadPdf } from './pdfDocument';
 import { quoteItems } from './quoteDocument';
+import { documentFilename } from './documentFilename';
 
 export async function printServiceNote(order: ServiceOrder, client?: Client, equipment?: Equipment, quote?: Quote) {
   if (!order.serviceValue || order.serviceValue <= 0) throw new Error('Informe o valor do serviço antes de gerar a nota.');
@@ -29,5 +30,8 @@ export async function printServiceNote(order: ServiceOrder, client?: Client, equ
   y = addSection(pdf, y, 'Conclusão', `Status: ${order.status}\nEntrada: ${order.intakeDate}\nSaída: ${order.exitDate || '-'}`);
   addSection(pdf, y, 'Assinaturas', '\n\nResponsável técnico: ______________________________\n\nCliente: _________________________________________');
   addFooter(pdf, `Nota de Serviço ${order.id.toUpperCase()}`);
-  downloadPdf(pdf, `nota-de-servico-${order.id.toLowerCase()}.pdf`);
+  downloadPdf(
+    pdf,
+    documentFilename('nota-de-servico', client?.name, order.id),
+  );
 }
