@@ -622,7 +622,8 @@ function App() {
     const linkedFinance = finance.find(
       (entry) =>
         entry.type === "Receber" &&
-        entry.description === `Orçamento ${quoteDraft.id.toUpperCase()}`,
+        (entry.quoteId === quoteDraft.id ||
+          entry.description === `Orçamento ${quoteDraft.id.toUpperCase()}`),
     );
     const breakdown = quoteBreakdown(quoteDraft);
     const updatedFinance = linkedFinance
@@ -686,7 +687,8 @@ function App() {
     const linkedFinance = finance.filter(
       (entry) =>
         entry.type === "Receber" &&
-        entry.description === `Orçamento ${quote.id.toUpperCase()}`,
+        (entry.quoteId === quote.id ||
+          entry.description === `Orçamento ${quote.id.toUpperCase()}`),
     );
     try {
       await Promise.all([
@@ -708,10 +710,16 @@ function App() {
   async function approveQuote(quote: Quote) {
     const approved = { ...quote, approved: true };
     const breakdown = quoteBreakdown(quote);
+    const linkedOrder = orders.find(
+      (order) => order.id === quote.serviceOrderId,
+    );
+    const linkedClient = clients.find(
+      (client) => client.id === linkedOrder?.clientId,
+    );
     const entry: FinanceEntry = {
       id: makeId("fin"),
       type: "Receber",
-      description: `Orçamento ${quote.id.toUpperCase()}`,
+      description: `${linkedClient?.name ?? "Cliente não identificado"} - ${linkedOrder?.id.toUpperCase() ?? quote.serviceOrderId.toUpperCase()}`,
       amount: breakdown.total,
       dueDate: today(),
       paid: false,
@@ -1964,6 +1972,10 @@ function Finance({
             (entry) => entry.id === linkedQuote?.serviceOrderId,
           );
           const relations = resolveOrderRelations(order, clients, equipment);
+          const entryLabel =
+            item.type === "Receber" && order
+              ? `${relations.client?.name ?? "Cliente não identificado"} - ${order.id.toUpperCase()}`
+              : item.description;
           const noteOrder = order
             ? {
                 ...order,
@@ -1975,7 +1987,7 @@ function Finance({
           return (
           <article className="record-card" key={item.id}>
             <strong>{item.type}</strong>
-            <span>{item.description}</span>
+            <span>{entryLabel}</span>
             <span>
               {item.dueDate} · {item.paid ? "Pago" : "Aberto"}
             </span>

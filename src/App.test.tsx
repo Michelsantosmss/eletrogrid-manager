@@ -263,7 +263,7 @@ test('separa serviços e materiais e desconta as peças do valor a receber', asy
 
   expect(screen.getByText('Serviços a receber').closest('article')).toHaveTextContent('R$ 800,00');
   expect(screen.getByText('Materiais/peças').closest('article')).toHaveTextContent('R$ 80,00');
-  const financeCard = screen.getByText(/^Orçamento ORC-/i).closest('article');
+  const financeCard = screen.getByText(/Hospital São Lucas - OS-1/i).closest('article');
   expect(financeCard).toHaveTextContent('Serviços: R$ 200,00');
   expect(financeCard).toHaveTextContent('Materiais/peças: R$ 80,00');
 });
