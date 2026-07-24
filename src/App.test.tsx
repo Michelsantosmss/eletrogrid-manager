@@ -160,3 +160,37 @@ test('abre a ordem ao informar manualmente o código do QR', async () => {
   expect(await screen.findByRole('heading', { name: 'Ordens de serviço' })).toBeInTheDocument();
   expect(await screen.findByText(/OS-1 · Em análise/i)).toBeInTheDocument();
 });
+
+test('permite alterar e salvar o status da OS', async () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Ordens de serviço' }));
+  fireEvent.change(screen.getByLabelText('Status os-1'), { target: { value: 'Entregue' } });
+
+  expect(await screen.findByText(/OS-1 · Entregue/i)).toBeInTheDocument();
+  expect(screen.getByLabelText('Status os-1')).toHaveValue('Entregue');
+});
+
+test('permite editar os dados principais de uma OS', async () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Ordens de serviço' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Editar OS OS-1' }));
+  fireEvent.change(screen.getByPlaceholderText('Problema relatado'), { target: { value: 'Problema corrigido na edição' } });
+  fireEvent.change(screen.getByLabelText('Status da OS em edição'), { target: { value: 'Finalizado' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Atualizar OS' }));
+
+  expect(await screen.findByText('Problema corrigido na edição')).toBeInTheDocument();
+  expect(screen.getByLabelText('Status os-1')).toHaveValue('Finalizado');
+});
+
+test('permite excluir uma OS após confirmação', async () => {
+  const confirmation = vi.spyOn(window, 'confirm').mockReturnValue(true);
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Ordens de serviço' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Excluir OS OS-1' }));
+
+  await waitFor(() => expect(screen.queryByText(/OS-1 · Em análise/i)).not.toBeInTheDocument());
+  confirmation.mockRestore();
+});
