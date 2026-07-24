@@ -15,7 +15,7 @@ export async function printServiceNote(order: ServiceOrder, client?: Client, equ
   const serviceValue = Math.max(0, order.serviceValue - materialValue);
   const { pdf, y: startY } = await createPdf('NOTA DE SERVIÇO', order.id.toUpperCase());
   let y = addSection(pdf, startY, 'Cliente', `${client?.name ?? 'Não identificado'}\nCPF/CNPJ: ${client?.document ?? '-'}\nTelefone: ${client?.phone ?? '-'}\nE-mail: ${client?.email ?? '-'}\nCidade: ${client?.city ?? '-'}`);
-  y = addSection(pdf, y, 'Equipamento', `${equipment ? `${equipment.brand} ${equipment.model}` : 'Não identificado'}\nSérie/IMEI: ${equipment?.serial ?? '-'}`);
+  y = addSection(pdf, y, 'Equipamento', `${equipment ? `${equipment.equipmentName ? `${equipment.equipmentName} - ` : ''}${equipment.brand} ${equipment.model}` : 'Não identificado'}\nSérie/IMEI: ${equipment?.serial ?? '-'}`);
   y = addSection(pdf, y, 'Defeito relatado', order.problem);
   y = addSection(pdf, y, 'Diagnóstico técnico', order.diagnosis || '-');
   y = addSection(pdf, y, 'Serviços executados', order.servicePerformed || 'Aguardando registro dos serviços executados.');

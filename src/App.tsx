@@ -188,6 +188,7 @@ function App() {
   const [editingClient, setEditingClient] = useState<string | null>(null);
   const [equipmentForm, setEquipmentForm] = useState<Omit<Equipment, "id">>({
     clientId: "cli-1",
+    equipmentName: "",
     category: "Eletrônico",
     brand: "",
     model: "",
@@ -266,6 +267,7 @@ function App() {
           item.model,
           item.serial,
           item.category,
+          item.equipmentName ?? "",
           item.color ?? "",
           item.accessories ?? "",
           item.condition ?? "",
@@ -413,6 +415,7 @@ function App() {
     );
     setEquipmentForm({
       clientId: clients[0]?.id ?? "",
+      equipmentName: "",
       category: "Eletrônico",
       brand: "",
       model: "",
@@ -1224,6 +1227,7 @@ function EquipmentModule({
         </select>
         {(
           [
+            "equipmentName",
             "brand",
             "model",
             "serial",
@@ -1240,6 +1244,7 @@ function EquipmentModule({
             onChange={(e) => setForm({ ...form, [key]: e.target.value })}
             placeholder={
               {
+                equipmentName: "Equipamento",
                 brand: "Marca",
                 model: "Modelo",
                 serial: "Número de série / IMEI",
@@ -1251,6 +1256,7 @@ function EquipmentModule({
               }[key]
             }
             required={
+              key === "equipmentName" ||
               key === "brand" ||
               key === "model" ||
               key === "serial" ||
@@ -1265,6 +1271,7 @@ function EquipmentModule({
       <Cards>
         {items.map((item) => (
           <article className="record-card" key={item.id}>
+            {item.equipmentName && <span>Equipamento: {item.equipmentName}</span>}
             <strong>
               {item.brand} {item.model}
             </strong>

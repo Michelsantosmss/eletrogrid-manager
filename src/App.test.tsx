@@ -97,12 +97,14 @@ test('vincula cliente e equipamento novos ao criar uma OS', async () => {
   const equipmentClient = screen.getByLabelText('Cliente do equipamento');
   const newClientOption = screen.getByRole('option', { name: 'Cliente Novo' }) as HTMLOptionElement;
   fireEvent.change(equipmentClient, { target: { value: newClientOption.value } });
+  fireEvent.change(screen.getByPlaceholderText('Equipamento'), { target: { value: 'Notebook' } });
   fireEvent.change(screen.getByPlaceholderText('Marca'), { target: { value: 'Marca Nova' } });
   fireEvent.change(screen.getByPlaceholderText('Modelo'), { target: { value: 'Modelo Novo' } });
   fireEvent.change(screen.getByPlaceholderText('Número de série / IMEI'), { target: { value: 'SERIE-NOVA' } });
   fireEvent.change(screen.getByPlaceholderText('Estado na entrada'), { target: { value: 'Bom estado' } });
   fireEvent.click(screen.getByRole('button', { name: 'Salvar equipamento' }));
   await screen.findByText('Marca Nova Modelo Novo');
+  expect(screen.getByText('Equipamento: Notebook')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /Ordens de serviço/i }));
   const orderClient = screen.getByLabelText('Cliente da nova OS');
