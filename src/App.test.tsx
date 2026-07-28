@@ -138,6 +138,7 @@ test('dashboard usa somente as ordens e o faturamento recebidos da conta', () =>
   expect(screen.getByText('Ordens abertas').closest('article')).toHaveTextContent('00');
   expect(screen.getByText('A receber')).toBeInTheDocument();
   expect(screen.getAllByText('R$ 120,00')).toHaveLength(2);
+  expect(['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'].every((month) => screen.getByText(month))).toBe(true);
 });
 
 test('dashboard desconta peças e exibe o faturamento líquido previsto', () => {
