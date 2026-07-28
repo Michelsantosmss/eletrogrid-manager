@@ -168,6 +168,21 @@ test('dashboard exibe exatamente os status cadastrados nas ordens', () => {
   expect(screen.queryByText('Em testes')).not.toBeInTheDocument();
 });
 
+test('acompanhamento mostra somente as cinco OS mais recentes em ordem de criação', () => {
+  const order = (number: number, date: string) => ({ id: `os-${number.toString().padStart(6, '0')}`, clientId: 'cli', equipmentId: 'eq', status: 'Recebido' as const, intakeDate: date, problem: `Ordem ${number}`, diagnosis: '', history: [] });
+  const { container } = render(<OperationsDashboard
+    clients={[]}
+    equipment={[]}
+    orders={[order(2, '2026-07-20'), order(7, '2026-07-22'), order(1, '2026-07-19'), order(5, '2026-07-21'), order(6, '2026-07-22'), order(3, '2026-07-20'), order(4, '2026-07-21')]}
+    finance={[]}
+    demo={false}
+  />);
+
+  const displayedOrders = [...container.querySelectorAll('.recent-order-row strong')].map((item) => item.textContent);
+  expect(displayedOrders).toEqual(['OS-000007', 'OS-000006', 'OS-000005', 'OS-000004', 'OS-000003']);
+  expect(screen.queryByText('OS-000002')).not.toBeInTheDocument();
+});
+
 test('permite marcar um lançamento como recebido e atualiza o dashboard', () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
