@@ -1070,6 +1070,19 @@ function App() {
 const match = (term: string, ...values: string[]) =>
   values.join(" ").toLocaleLowerCase().includes(term.toLocaleLowerCase());
 
+function orderIdentification(
+  order: ServiceOrder | undefined,
+  equipment: Equipment | undefined,
+) {
+  if (!order) return "";
+  const appliance =
+    equipment?.equipmentName ||
+    equipment?.model ||
+    equipment?.category ||
+    "Não identificado";
+  return `Aparelho: ${appliance} · Marca: ${equipment?.brand || "Não informada"} · Defeito: ${order.problem || "Não informado"}`;
+}
+
 function quoteBreakdown(quote: Quote) {
   const materials = quoteItems(quote)
     .filter((item) => item.kind === "Peça/material")
@@ -1532,7 +1545,9 @@ function Orders({
                     Entrada: {item.intakeDate}
                     {item.exitDate ? ` · Saída: ${item.exitDate}` : ""}
                   </span>
-                  <p>{item.problem}</p>
+                  <p className="order-identification">
+                    {orderIdentification(item, asset)}
+                  </p>
                 </div>
                 <div className="status-control">
                   <select
@@ -1883,6 +1898,9 @@ function Quotes({
               <strong>{item.id.toUpperCase()}</strong>
               <span>OS: {item.serviceOrderId.toUpperCase()}</span>
               {client && <span>Cliente: {client.name}</span>}
+              <span className="order-identification">
+                {orderIdentification(order, asset)}
+              </span>
               {quoteItems(item).map((entry) => (
                 <span key={entry.id}>
                   {entry.quantity}× {entry.description || entry.kind} ·{" "}
@@ -2017,6 +2035,11 @@ function Finance({
           <article className="record-card" key={item.id}>
             <strong>{item.type}</strong>
             <span>{entryLabel}</span>
+            {order && (
+              <span className="order-identification">
+                {orderIdentification(order, relations.equipment)}
+              </span>
+            )}
             <span>
               {item.dueDate} · {item.paid ? "Pago" : "Aberto"}
             </span>

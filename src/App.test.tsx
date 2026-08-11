@@ -47,6 +47,7 @@ test('cria uma OS numerada e vincula uma etiqueta QR ao equipamento', async () =
 
   expect(await screen.findByText('OS-000003 · Recebido')).toBeInTheDocument();
   expect(screen.getByText('Etiqueta QR do equipamento')).toBeInTheDocument();
+  expect(screen.getByText(/Aparelho: Nobreak Smart 3kVA · Marca: APC · Defeito: Oscilação/i)).toBeInTheDocument();
 });
 
 test('atualiza o total do orçamento ao informar o valor unitário', () => {
@@ -112,7 +113,7 @@ test('vincula cliente e equipamento novos ao criar uma OS', async () => {
   expect(screen.getByRole('option', { name: 'Marca Nova Modelo Novo' })).toBeInTheDocument();
   fireEvent.change(screen.getByPlaceholderText('Problema relatado'), { target: { value: 'Teste do vínculo' } });
   fireEvent.click(screen.getByRole('button', { name: /Gerar OS automaticamente/i }));
-  expect(await screen.findByText('Teste do vínculo')).toBeInTheDocument();
+  expect(await screen.findByText(/Defeito: Teste do vínculo/i)).toBeInTheDocument();
 });
 
 test('oferece instalação de ar-condicionado split como categoria', () => {
@@ -268,7 +269,7 @@ test('permite editar os dados principais de uma OS', async () => {
   fireEvent.change(screen.getByLabelText('Status da OS em edição'), { target: { value: 'Finalizado' } });
   fireEvent.click(screen.getByRole('button', { name: 'Atualizar OS' }));
 
-  expect(await screen.findByText('Problema corrigido na edição')).toBeInTheDocument();
+  expect(await screen.findByText(/Defeito: Problema corrigido na edição/i)).toBeInTheDocument();
   expect(screen.getByLabelText('Status os-1')).toHaveValue('Finalizado');
 });
 
@@ -335,6 +336,7 @@ test('separa serviços e materiais e desconta as peças do valor a receber', asy
   expect(screen.getByText('Serviços a receber').closest('article')).toHaveTextContent('R$ 800,00');
   expect(screen.getByText('Materiais/peças').closest('article')).toHaveTextContent('R$ 80,00');
   const financeCard = screen.getByText(/Hospital São Lucas - OS-1/i).closest('article');
+  expect(financeCard).toHaveTextContent('Aparelho: Nobreak Smart 3kVA · Marca: APC · Defeito: Oscilação');
   expect(financeCard).toHaveTextContent('Serviços: R$ 200,00');
   expect(financeCard).toHaveTextContent('Materiais/peças: R$ 80,00');
 });

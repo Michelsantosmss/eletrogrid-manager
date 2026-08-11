@@ -204,6 +204,7 @@ button:hover { background: #083b82; }
 .document-button { background: #edf3fb; color: #0b4d9e; border: 1px solid #ceddf0; border-radius: 6px; padding: 7px 9px; font-size: .72rem; white-space: nowrap; }
 .document-button:hover { background: #0b4d9e; color: white; }
 .order-card { display: grid; gap: 14px; }
+.order-identification { color: #34445c !important; font-weight: 700; line-height: 1.45; }
 .editing-banner { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 0 0 14px; padding: 12px 14px; border-left: 4px solid #f68b1f; border-radius: 10px; background: #fff4e5; color: #18365e; }
 .editing-banner span { color: #64748b; }
 .status-control { display: grid; gap: 7px; min-width: 190px; }
