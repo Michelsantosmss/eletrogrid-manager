@@ -271,6 +271,8 @@ test('permite excluir uma OS após confirmação', async () => {
 
 test('permite editar e excluir um orçamento', async () => {
   const confirmation = vi.spyOn(window, 'confirm').mockReturnValue(true);
+  const originalScrollIntoView = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = vi.fn();
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
   fireEvent.click(screen.getByRole('button', { name: 'Ordens de serviço' }));
@@ -281,6 +283,7 @@ test('permite editar e excluir um orçamento', async () => {
   expect(await screen.findByText(/Orçamento original/i)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /Editar orçamento ORC-/i }));
+  await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled());
   expect(screen.getByText('Editar orçamento', { selector: 'strong' })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Descrição do item'), { target: { value: 'Orçamento atualizado' } });
   fireEvent.click(screen.getByRole('button', { name: 'Salvar orçamento' }));
@@ -288,6 +291,8 @@ test('permite editar e excluir um orçamento', async () => {
 
   fireEvent.click(screen.getByRole('button', { name: /Excluir orçamento ORC-/i }));
   await waitFor(() => expect(screen.queryByText(/Orçamento atualizado/i)).not.toBeInTheDocument());
+  if (originalScrollIntoView) Element.prototype.scrollIntoView = originalScrollIntoView;
+  else delete (Element.prototype as { scrollIntoView?: typeof Element.prototype.scrollIntoView }).scrollIntoView;
   confirmation.mockRestore();
 });
 

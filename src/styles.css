@@ -214,6 +214,7 @@ button:hover { background: #083b82; }
 .service-value-field { display: grid; gap: 5px; color: #0b3d85; font-size: .82rem; font-weight: 800; }
 .service-details textarea, .quote-form textarea { min-height: 78px; resize: vertical; }
 .quote-form { display: grid; gap: 12px; padding: 18px; border: 1px solid #cbd9eb; border-left: 4px solid #f68b1f; border-radius: 8px; background: #f8fbff; }
+#order-editor, #quote-editor { scroll-margin-top: 18px; }
 .quote-form-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .quote-form-heading > div { display: grid; gap: 4px; }
 .quote-form-heading span { color: #64748b; font-size: .85rem; }

@@ -74,6 +74,14 @@ const modules = [
 type Module = (typeof modules)[number];
 const today = () => new Date().toISOString().slice(0, 10);
 const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
+const scrollToEditor = (id: string) => {
+  window.setTimeout(() => {
+    document.getElementById(id)?.scrollIntoView?.({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 0);
+};
 const nextOrderId = (orders: ServiceOrder[]) => {
   const highest = orders.reduce(
     (current, order) =>
@@ -676,6 +684,7 @@ function App() {
       warranty: quote.warranty || "90 dias sobre o serviço executado",
       notes: quote.notes || "",
     });
+    scrollToEditor("quote-editor");
   }
   async function deleteQuote(quote: Quote) {
     if (
@@ -750,6 +759,7 @@ function App() {
       problem: order.problem,
       diagnosis: order.diagnosis,
     });
+    scrollToEditor("order-editor");
   }
   function cancelOrderEdit() {
     setEditingOrderId(null);
@@ -1401,7 +1411,7 @@ function Orders({
           <span>Altere os dados abaixo e salve a OS.</span>
         </div>
       )}
-      <form className="crud-form" onSubmit={onSubmit}>
+      <form className="crud-form" id="order-editor" onSubmit={onSubmit}>
         <select
           aria-label="Cliente da nova OS"
           value={form.clientId}
@@ -1702,7 +1712,7 @@ function Quotes({
   return (
     <Section eyebrow="Financeiro" title="Orçamentos" actions={<FileText />}>
       {draft && (
-        <form className="quote-form" onSubmit={onSave}>
+        <form className="quote-form" id="quote-editor" onSubmit={onSave}>
           <div className="quote-form-heading">
             <div>
               <strong>
