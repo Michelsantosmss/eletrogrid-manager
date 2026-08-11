@@ -72,6 +72,7 @@ const modules = [
   "Financeiro",
 ] as const;
 type Module = (typeof modules)[number];
+type OrderFilter = "Todas" | "Abertas" | ServiceStatus;
 const today = () => new Date().toISOString().slice(0, 10);
 const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 const scrollToEditor = (id: string) => {
@@ -163,9 +164,7 @@ function App() {
   const [userId, setUserId] = useState<string | null>(null);
   const [activeModule, setActiveModule] = useState<Module>("Dashboard");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"Todas" | ServiceStatus>(
-    "Todas",
-  );
+  const [statusFilter, setStatusFilter] = useState<OrderFilter>("Todas");
   const cloudEnabled = Boolean(userId) && !demo;
   const [clients, setClients] = useRealtimeCollection<Client>(
     "clients",
@@ -287,7 +286,10 @@ function App() {
     () =>
       orders.filter(
         (item) =>
-          (statusFilter === "Todas" || item.status === statusFilter) &&
+          (statusFilter === "Todas" ||
+            (statusFilter === "Abertas"
+              ? !["Finalizado", "Entregue"].includes(item.status)
+              : item.status === statusFilter)) &&
           match(search, item.id, item.problem, item.diagnosis, item.status),
       ),
     [orders, search, statusFilter],
@@ -959,6 +961,18 @@ function App() {
             finance={finance}
             quotes={quotes}
             demo={demo}
+            onSelectOrders={(filter) => {
+              setStatusFilter(filter);
+              setActiveModule("Ordens de serviço");
+              window.setTimeout(
+                () =>
+                  document.documentElement.scrollIntoView?.({
+                    behavior: "smooth",
+                    block: "start",
+                  }),
+                0,
+              );
+            }}
           />
         )}
         {activeModule === "Clientes" && (
@@ -1093,6 +1107,7 @@ function Dashboard({
   finance,
   quotes,
   demo,
+  onSelectOrders,
 }: {
   clients: Client[];
   equipment: Equipment[];
@@ -1100,6 +1115,7 @@ function Dashboard({
   finance: FinanceEntry[];
   quotes: Quote[];
   demo: boolean;
+  onSelectOrders: (filter: Exclude<OrderFilter, "Todas">) => void;
 }) {
   return (
     <OperationsDashboard
@@ -1109,6 +1125,8 @@ function Dashboard({
       finance={finance}
       quotes={quotes}
       demo={demo}
+      onSelectOpenOrders={() => onSelectOrders("Abertas")}
+      onSelectStatus={onSelectOrders}
     />
   );
 }
@@ -1377,8 +1395,8 @@ function Orders({
   ) => void;
   onAttach: (order: ServiceOrder, file: File) => void;
   onQuote: (id: string) => void;
-  statusFilter: "Todas" | ServiceStatus;
-  setStatusFilter: (value: "Todas" | ServiceStatus) => void;
+  statusFilter: OrderFilter;
+  setStatusFilter: (value: OrderFilter) => void;
   setEditingOrderStatus: (value: ServiceStatus) => void;
 }) {
   const [statusDrafts, setStatusDrafts] = useState<
@@ -1396,10 +1414,11 @@ function Orders({
           aria-label="Filtrar ordens por status"
           value={statusFilter}
           onChange={(e) =>
-            setStatusFilter(e.target.value as "Todas" | ServiceStatus)
+            setStatusFilter(e.target.value as OrderFilter)
           }
         >
           <option>Todas</option>
+          <option>Abertas</option>
           {statuses.map((item) => (
             <option key={item}>{item}</option>
           ))}

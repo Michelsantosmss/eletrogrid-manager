@@ -187,6 +187,7 @@ button:hover { background: #083b82; }
 .sync-state.live { color: #15935e; }
 .status-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 11px; }
 .status-card { min-height: 112px; padding: 14px; display: grid; gap: 6px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; box-shadow: 0 4px 12px rgba(23, 48, 84, .05); }
+.status-card:not(:disabled) { cursor: pointer; text-align: left; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }.status-card:not(:disabled):hover, .status-card:not(:disabled):focus-visible { transform: translateY(-2px); border-color: #8eb5e6; box-shadow: 0 8px 20px rgba(23, 48, 84, .14); outline: 2px solid rgba(14,88,174,.2); }.status-card:disabled { cursor: default; opacity: .72; }
 .status-card span { color: #0e58ae; }.status-card small { color: #6b7a8f; font-size: .72rem; font-weight: 700; }.status-card strong { color: #0a285a; font-size: 1.6rem; line-height: 1; }
 .status-card.orange span { color: #ee861b; }.status-card.red span { color: #dc5550; }.status-card.purple span { color: #8053c7; }.status-card.green span { color: #15935e; }.status-card.navy span { color: #07285d; }
 .dashboard-columns { display: grid; grid-template-columns: 1.45fr .8fr; gap: 16px; }

@@ -132,10 +132,10 @@ test('dashboard usa somente as ordens e o faturamento recebidos da conta', () =>
   />);
 
   expect(screen.getByText('1 ordens registradas')).toBeInTheDocument();
-  expect(screen.getAllByText('Em análise')[0].closest('article')).toHaveTextContent('00');
-  expect(screen.getAllByText('Aguardando peça')[0].closest('article')).toHaveTextContent('00');
-  expect(screen.getAllByText('Entregue')[0].closest('article')).toHaveTextContent('01');
-  expect(screen.getByText('Ordens abertas').closest('article')).toHaveTextContent('00');
+  expect(screen.getAllByText('Em análise')[0].closest('.status-card')).toHaveTextContent('00');
+  expect(screen.getAllByText('Aguardando peça')[0].closest('.status-card')).toHaveTextContent('00');
+  expect(screen.getAllByText('Entregue')[0].closest('.status-card')).toHaveTextContent('01');
+  expect(screen.getByText('Ordens abertas').closest('.status-card')).toHaveTextContent('00');
   expect(screen.getByText('A receber')).toBeInTheDocument();
   expect(screen.getAllByText('R$ 120,00')).toHaveLength(2);
   expect(['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'].every((month) => screen.getByText(month))).toBe(true);
@@ -186,7 +186,7 @@ test('dashboard exibe exatamente os status cadastrados nas ordens', () => {
     demo={false}
   />);
 
-  expect(screen.getAllByText('Finalizado')[0].closest('article')).toHaveTextContent('02');
+  expect(screen.getAllByText('Finalizado')[0].closest('.status-card')).toHaveTextContent('02');
   expect(screen.queryByText('Em testes')).not.toBeInTheDocument();
 });
 
@@ -203,6 +203,20 @@ test('acompanhamento mostra somente as cinco OS mais recentes em ordem de criaç
   const displayedOrders = [...container.querySelectorAll('.recent-order-row strong')].map((item) => item.textContent);
   expect(displayedOrders).toEqual(['OS-000007', 'OS-000006', 'OS-000005', 'OS-000004', 'OS-000003']);
   expect(screen.queryByText('OS-000002')).not.toBeInTheDocument();
+});
+
+test('abre as ordens filtradas ao clicar em um cartão operacional com registros', async () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /modo demonstra/i }));
+
+  const emptyCard = screen.getByRole('button', { name: /Ver 0 OS com status Recebido/i });
+  expect(emptyCard).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: /Ver 1 OS com status Em análise/i }));
+
+  expect(await screen.findByRole('heading', { name: 'Ordens de serviço' })).toBeInTheDocument();
+  expect(screen.getByLabelText('Filtrar ordens por status')).toHaveValue('Em análise');
+  expect(screen.getByText(/OS-1 · Em análise/i)).toBeInTheDocument();
+  expect(screen.queryByText(/OS-2 · Aguardando peça/i)).not.toBeInTheDocument();
 });
 
 test('permite marcar um lançamento como recebido e atualiza o dashboard', () => {
