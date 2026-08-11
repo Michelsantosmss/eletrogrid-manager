@@ -154,6 +154,28 @@ test('dashboard desconta peças e exibe o faturamento líquido previsto', () => 
   expect(screen.queryByText('R$ 280,00')).not.toBeInTheDocument();
 });
 
+test('permite selecionar o faturamento previsto de um mês no gráfico', () => {
+  render(<OperationsDashboard
+    clients={[]}
+    equipment={[]}
+    orders={[]}
+    finance={[
+      { id: 'fin-jul', type: 'Receber', description: 'Julho', amount: 120, dueDate: '2026-07-10', paid: false },
+      { id: 'fin-ago', type: 'Receber', description: 'Agosto', amount: 250, materialAmount: 50, dueDate: '2026-08-10', paid: false },
+    ]}
+    demo={false}
+  />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Ver faturamento de Ago' }));
+  expect(screen.getByText('Ago 2026')).toBeInTheDocument();
+  expect(screen.getAllByText('R$ 200,00')).toHaveLength(2);
+  expect(screen.getByRole('button', { name: 'Ver faturamento de Ago' })).toHaveAttribute('aria-pressed', 'true');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Ver total anual' }));
+  expect(screen.getByText('Total anual')).toBeInTheDocument();
+  expect(screen.getAllByText('R$ 320,00')).toHaveLength(2);
+});
+
 test('dashboard exibe exatamente os status cadastrados nas ordens', () => {
   const finalizada = (id: string) => ({ id, clientId: 'cli', equipmentId: 'eq', status: 'Finalizado' as const, intakeDate: '2026-07-24', problem: '', diagnosis: '', history: [] });
   render(<OperationsDashboard
