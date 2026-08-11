@@ -13,14 +13,15 @@ export const quoteSubtotal = (quote: Quote) => quoteItems(quote).reduce((sum, it
 export const quoteTotal = (quote: Quote) => quoteSubtotal(quote) - quote.discount;
 
 export async function printQuote(quote: Quote, order?: ServiceOrder, client?: Client, equipment?: Equipment) {
-  const { pdf, y: startY } = await createPdf('ORÇAMENTO', `${quote.id.toUpperCase()} - ${quote.serviceOrderId.toUpperCase()}`);
+  const reference = quote.code ?? quote.id.toUpperCase();
+  const { pdf, y: startY } = await createPdf('ORÇAMENTO', `${reference} - ${quote.serviceOrderId.toUpperCase()}`);
   let y = addSection(pdf, startY, 'Cliente', `${client?.name ?? 'Não identificado'}\nCPF/CNPJ: ${client?.document ?? '-'}\nTelefone: ${client?.phone ?? '-'}\nE-mail: ${client?.email ?? '-'}\nCidade: ${client?.city ?? '-'}`);
   y = addSection(pdf, y, 'Equipamento e OS', `${equipment ? `${equipment.equipmentName ? `${equipment.equipmentName} - ` : ''}${equipment.brand} ${equipment.model}` : 'Não identificado'}\nSérie/IMEI: ${equipment?.serial ?? '-'}\nOS: ${order?.id.toUpperCase() ?? quote.serviceOrderId.toUpperCase()}\nDefeito relatado: ${order?.problem ?? '-'}`);
   y = addSection(pdf, y, 'Serviços, peças e materiais', quoteItems(quote).map((item) => `${item.quantity} x ${item.description || item.kind} - ${money.format(item.unitPrice)} = ${money.format(item.quantity * item.unitPrice)}`).join('\n'));
   y = addSection(pdf, y, 'Valores', `Subtotal: ${money.format(quoteTotal(quote) + quote.discount)}\nDesconto: ${money.format(quote.discount)}\nTOTAL: ${money.format(quoteTotal(quote))}`);
   y = addSection(pdf, y, 'Prazo e garantia', `Prazo de execução: ${quote.deadline || '-'}\nGarantia: ${quote.warranty || '-'}`);
   addSection(pdf, y, 'Condições e observações', quote.notes || '-');
-  addFooter(pdf, `Orçamento ${quote.id.toUpperCase()}`);
+  addFooter(pdf, `Orçamento ${reference}`);
   downloadPdf(
     pdf,
     documentFilename(

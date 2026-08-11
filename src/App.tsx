@@ -91,6 +91,39 @@ const nextOrderId = (orders: ServiceOrder[]) => {
   );
   return `os-${String(highest + 1).padStart(6, "0")}`;
 };
+const quoteCode = (quote: Quote, quotes: Quote[]) => {
+  const directNumber = Number(quote.id.match(/^orc-(\d+)$/i)?.[1] ?? 0);
+  if (directNumber) return `ORC-${directNumber.toString().padStart(3, "0")}`;
+  const used = new Set(
+    quotes
+      .map((item) => Number(item.id.match(/^orc-(\d+)$/i)?.[1] ?? 0))
+      .filter(Boolean),
+  );
+  const legacy = quotes
+    .filter((item) => !/^orc-\d+$/i.test(item.id))
+    .sort(
+      (a, b) =>
+        a.serviceOrderId.localeCompare(b.serviceOrderId, undefined, {
+          numeric: true,
+        }) || a.id.localeCompare(b.id),
+    );
+  let number = 0;
+  for (const item of legacy) {
+    do number += 1;
+    while (used.has(number));
+    if (item.id === quote.id)
+      return `ORC-${number.toString().padStart(3, "0")}`;
+  }
+  return "ORC-001";
+};
+const nextQuoteId = (quotes: Quote[]) => {
+  const highest = quotes.reduce(
+    (current, quote) =>
+      Math.max(current, Number(quoteCode(quote, quotes).match(/\d+$/)?.[0] ?? 0)),
+    0,
+  );
+  return `orc-${(highest + 1).toString().padStart(3, "0")}`;
+};
 const equipmentQr = (orderId: string, equipmentId: string) => {
   const value = `ELETROGRID|${orderId.toUpperCase()}|${equipmentId}`;
   return {
@@ -605,7 +638,7 @@ function App() {
             notes: existing.notes || "",
           }
         : {
-            id: makeId("orc"),
+            id: nextQuoteId(quotes),
             serviceOrderId: orderId,
             items: [
               {
@@ -691,7 +724,7 @@ function App() {
   async function deleteQuote(quote: Quote) {
     if (
       !window.confirm(
-        `Excluir o orçamento ${quote.id.toUpperCase()}? O lançamento financeiro vinculado também será removido.`,
+        `Excluir o orçamento ${quoteCode(quote, quotes)}? O lançamento financeiro vinculado também será removido.`,
       )
     )
       return;
@@ -1885,6 +1918,7 @@ function Quotes({
       )}
       <Cards>
         {items.map((item) => {
+          const displayCode = quoteCode(item, items);
           const order = orders.find(
             (entry) => entry.id === item.serviceOrderId,
           );
@@ -1895,7 +1929,7 @@ function Quotes({
           );
           return (
             <article className="record-card" key={item.id}>
-              <strong>{item.id.toUpperCase()}</strong>
+              <strong>{displayCode}</strong>
               <span>OS: {item.serviceOrderId.toUpperCase()}</span>
               {client && <span>Cliente: {client.name}</span>}
               <span className="order-identification">
@@ -1910,7 +1944,7 @@ function Quotes({
               <strong>Total: {money.format(quoteTotal(item))}</strong>
               <div className="card-actions">
                 <button
-                  aria-label={`Editar orçamento ${item.id.toUpperCase()}`}
+                  aria-label={`Editar orçamento ${displayCode}`}
                   className="ghost-button"
                   onClick={() => onEdit(item)}
                   type="button"
@@ -1919,7 +1953,7 @@ function Quotes({
                   Editar orçamento
                 </button>
                 <button
-                  aria-label={`Excluir orçamento ${item.id.toUpperCase()}`}
+                  aria-label={`Excluir orçamento ${displayCode}`}
                   className="danger-button"
                   onClick={() => onDelete(item)}
                   type="button"
@@ -1928,7 +1962,7 @@ function Quotes({
                   Excluir orçamento
                 </button>
                 <QuoteDocumentButton
-                  quote={item}
+                  quote={{ ...item, code: displayCode }}
                   order={order}
                   client={client}
                   equipment={asset}

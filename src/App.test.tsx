@@ -296,6 +296,7 @@ test('permite editar e excluir um orçamento', async () => {
   fireEvent.change(screen.getByLabelText('Valor unitário'), { target: { value: '120' } });
   fireEvent.click(screen.getByRole('button', { name: 'Salvar orçamento' }));
   expect(await screen.findByText(/Orçamento original/i)).toBeInTheDocument();
+  expect(screen.getByText('ORC-001')).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: /Editar orçamento ORC-/i }));
   await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled());
